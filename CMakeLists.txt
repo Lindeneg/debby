@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.27)
 project(debby)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CL_CLANG_DEBUG_FLAGS "-ggdb -pedantic-errors -D DEBUG -Wall -Weffc++ -Wextra -Wconversion -Wsign-conversion")
+set(CL_CLANG_DEBUG_FLAGS "-ggdb -pedantic-errors -D DEBUG -Wall -Weffc++")
 set(CL_CLANG_RELEASE_FLAGS "-O2 -DNDEBUG")
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 

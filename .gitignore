@@ -1,5 +1,3 @@
 .cache
 build
-misc
 compile_commands.json
-generate-windows.bat
