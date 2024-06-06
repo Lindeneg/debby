@@ -1,7 +1,5 @@
 .cache
-SDL
 build
 misc
 compile_commands.json
 generate-windows.bat
-CMakeLists.txt
