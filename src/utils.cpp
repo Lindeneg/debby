@@ -1,7 +1,7 @@
 #include "utils.h"
 
-debby::Color debby::utils::uint32_to_color(const uint32_t color) noexcept {
-    Color c{};
+debby::SColor debby::utils::color_to_s_color(const Color color) noexcept {
+    SColor c{};
     c.a = static_cast<Uint8>((color >> 24) & 0xFF);
     c.r = static_cast<Uint8>((color >> 16) & 0xFF);
     c.g = static_cast<Uint8>((color >> 8) & 0xFF);
@@ -9,8 +9,8 @@ debby::Color debby::utils::uint32_to_color(const uint32_t color) noexcept {
     return c;
 }
 
-uint32_t debby::utils::color_to_uint32(const Color color) noexcept {
-    return (uint32_t)((color.a << 24) + (color.r << 16) + (color.g << 8) +
-                      (color.b << 0));
+debby::Color debby::utils::s_color_to_color(const SColor color) noexcept {
+    return static_cast<Color>((color.a << 24) + (color.r << 16) +
+                              (color.g << 8) + (color.b << 0));
 }
 
