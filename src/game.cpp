@@ -1,13 +1,28 @@
 #include "game.h"
 
-Game::Game() {}
+#include "./log.h"
+#include "./screen.h"
 
-Game::~Game() {}
+bool debby::game::initialize(int w, int h) noexcept {
+    if (!screen::initialize(w, h)) {
+        debby::log::error("failed to initialize screen\n");
+        return false;
+    }
+    return true;
+}
 
-bool Game::initialize() { return true; }
-void Game::run() {}
-void Game::destroy() {}
+void debby::game::run() noexcept {
+    while (true) {
+        process_input();
+        update();
+        render();
+    }
+}
 
-void Game::process_input() {}
-void Game::update() {}
-void Game::render() {}
+void debby::game::process_input() noexcept {}
+
+void debby::game::update() noexcept {}
+
+void debby::game::render() noexcept {}
+
+void debby::game::destroy() noexcept { screen::destroy(); }

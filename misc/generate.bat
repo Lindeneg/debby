@@ -5,3 +5,6 @@ cmake -S . -B .\build -G Ninja -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=ni
 
 REM copy new compile_commands.json for clangd LSP
 copy /Y .\build\compile_commands.json .
+
+DOSKEY b=call "./misc/build.bat"
+

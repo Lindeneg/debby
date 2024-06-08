@@ -1,14 +1,15 @@
 #include <cstdlib>
 
 #include "./game.h"
+#include "./log.h"
 
 int main(int argc, char *argv[]) {
-    Game game{};
-    if (!game.initialize()) {
-        // log error
+    debby::log::set_level(debby::log::LOG_LEVEL_VERBOSE);
+    if (!debby::game::initialize(800, 600)) {
         return EXIT_FAILURE;
     }
-    game.run();
-    game.destroy();
+    // debby::game::run();
+    debby::game::destroy();
     return EXIT_SUCCESS;
 }
+
