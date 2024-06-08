@@ -2,7 +2,8 @@
 #define DEBBY_GAME_H_
 
 namespace debby::game {
-bool initialize(int w = 0, int h = 0) noexcept;
+
+bool initialize() noexcept;
 void run() noexcept;
 void destroy() noexcept;
 
