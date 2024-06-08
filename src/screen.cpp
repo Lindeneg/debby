@@ -1,77 +1,246 @@
 #include "screen.h"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_video.h>
 
+#include <glm/ext/vector_int2.hpp>
+
+#include "./globals.h"
 #include "./log.h"
+#include "./mem.h"
+
+class BackBuffer {
+   public:
+    debby::Color *buffer;
+
+    BackBuffer();
+    ~BackBuffer();
+
+    void initialize() noexcept;
+
+    void set_pixel(const int x, const int y,
+                   const debby::Color color) const noexcept;
+
+    void clear() const noexcept;
+
+    void destroy() noexcept;
+};
 
 static uint32_t sdl_subsystems{SDL_INIT_VIDEO | SDL_INIT_TIMER |
                                SDL_INIT_EVENTS};
+static SDL_DisplayMode display_mode{SDL_DisplayMode()};
+static BackBuffer back_buffer{BackBuffer()};
+static SDL_Texture *front_buffer{nullptr};
+static SDL_Window *window{nullptr};
+static SDL_Renderer *renderer{nullptr};
 
 static bool initialize_sdl() {
     if (SDL_WasInit(sdl_subsystems)) {
-        debby::log::error("SDL has already been initialized\n");
+        debby::log::error("SDL has already been initialized");
         return true;
     }
     if (SDL_Init(sdl_subsystems) != 0) {
-        debby::log::error("failed to initialize SDL %s\n", SDL_GetError());
+        debby::log::error("failed to initialize SDL %s", SDL_GetError());
         return false;
     }
-    // TODO initialize IMG and TTF
+    if (IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG) == 0) {
+        debby::log::error("failed to initialize SDL Image %s", SDL_GetError());
+        return false;
+    }
     return true;
 }
 
-SDL_DisplayMode debby::screen::display_mode{SDL_DisplayMode()};
-SDL_Window* debby::screen::window{nullptr};
-SDL_Renderer* debby::screen::renderer{nullptr};
+BackBuffer::BackBuffer() : buffer(nullptr) {}
+BackBuffer::~BackBuffer() { destroy(); }
 
-bool debby::screen::initialize(int w, int h) noexcept {
+void BackBuffer::initialize() noexcept {
+    assert(!buffer && "back buffer already initialized");
+    buffer =
+        debby::mem::allocate<debby::Color>(display_mode.w * display_mode.h);
+    clear();
+}
+
+void BackBuffer::set_pixel(const int x, const int y,
+                           const debby::Color color) const noexcept {
+    assert(buffer);
+    if (x >= 0 && x < display_mode.w && y >= 0 && y < display_mode.h) {
+        buffer[(display_mode.w * y) + x] = color;
+    }
+}
+
+void BackBuffer::clear() const noexcept {
+    assert(buffer);
+    for (int i = 0; i < display_mode.w * display_mode.h; i++) {
+        buffer[i] = debby::color::black;
+    }
+}
+
+void BackBuffer::destroy() noexcept {
+    if (buffer) {
+        debby::mem::destroy(buffer);
+        debby::log::verbose("backbuffer ptr freed");
+        buffer = nullptr;
+    }
+}
+
+bool debby::screen::initialize(Context &ctx) noexcept {
     if (!initialize_sdl()) {
         return false;
     }
     SDL_GetCurrentDisplayMode(0, &display_mode);
+    ctx.display_size = glm::ivec2(display_mode.w, display_mode.h);
     if (!window) {
-        if (!w) {
-            w = display_mode.w;
-        }
-        if (!h) {
-            h = display_mode.h;
-        }
         window = SDL_CreateWindow("Debby", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, w, h,
-                                  SDL_WINDOW_BORDERLESS);
+                                  SDL_WINDOWPOS_CENTERED, ctx.display_size.x,
+                                  ctx.display_size.y, SDL_WINDOW_MAXIMIZED);
         if (!window) {
-            debby::log::error("failed to create SDL window %s\n",
-                              SDL_GetError());
+            log::error("failed to create SDL window %s", SDL_GetError());
             return false;
         }
-        debby::log::info("initialized SDL window (%d,%d)\n", w, h);
+        log::verbose("initialized SDL window (%d,%d)", ctx.display_size.x,
+                     ctx.display_size.y);
     }
     if (!renderer) {
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
         if (!renderer) {
-            debby::log::error("failed to create SDL renderer %s\n",
-                              SDL_GetError());
+            log::error("failed to create SDL renderer %s", SDL_GetError());
             SDL_DestroyWindow(window);
             window = nullptr;
             return false;
         }
-        debby::log::info("initialized SDL renderer\n");
+        log::verbose("initialized SDL renderer");
     }
+    if (!front_buffer) {
+        front_buffer = SDL_CreateTexture(
+            renderer, constants::PIXEL_FORMAT, SDL_TEXTUREACCESS_STREAMING,
+            ctx.display_size.x, ctx.display_size.y);
+        if (!front_buffer) {
+            log::error("failed to create frontbuffer %s", SDL_GetError());
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(window);
+            renderer = nullptr;
+            window = nullptr;
+            return false;
+        }
+        log::verbose("initialized frontbuffer");
+    }
+    back_buffer.initialize();
     return true;
 }
 
+SDL_Renderer *get_renderer() noexcept { return renderer; }
+
+void debby::screen::draw_vec2(const glm::vec2 &vec,
+                              const Color color) noexcept {
+    back_buffer.set_pixel(vec.x, vec.y, color);
+}
+
+void debby::screen::draw_line(const glm::vec2 &p0, const glm::vec2 &p1,
+                              const Color color) noexcept {
+    auto p0x{static_cast<int>(p0.x)};
+    auto p0y{static_cast<int>(p0.y)};
+    auto p1x{static_cast<int>(p1.x)};
+    auto p1y{static_cast<int>(p1.y)};
+    // delta x
+    int dx{abs(p1x - p0x)};
+    // right or left?
+    int sx{p0x < p1x ? 1 : -1};
+    int dy{abs(p1y - p0y) * -1};
+    // up or down?
+    int sy{p0y < p1y ? 1 : -1};
+    int error{dx + dy};
+    while (true) {
+        back_buffer.set_pixel(p0x, p0y, color);
+        if (p0x == p1x && p0y == p1y) {
+            break;
+        }
+        int double_err{error * 2};
+        if (double_err >= dy) {
+            if (p0x == p1x) {
+                break;
+            }
+            error = error + dy;
+            p0x += sx;
+        }
+        if (double_err <= dx) {
+            if (p0y == p1y) {
+                break;
+            }
+            error = error + dx;
+            p0y += sy;
+        }
+    }
+}
+
+void debby::screen::draw_outlined_rect(const glm::vec2 &center,
+                                       const glm::vec2 &size,
+                                       const Color color) noexcept {
+    auto half_width{static_cast<int>(size.x / 2)};
+    auto half_height{static_cast<int>(size.y / 2)};
+
+    auto top_left{glm::vec2{center.x + half_width, center.y - half_height}};
+    auto top_right{glm::vec2{center.x - half_width, center.y - half_height}};
+    auto bottom_right{glm::vec2{center.x - half_width, center.y + half_height}};
+    auto bottom_left{glm::vec2{center.x + half_width, center.y + half_height}};
+
+    draw_line(top_left, top_right, color);
+    draw_line(top_right, bottom_right, color);
+    draw_line(bottom_right, bottom_left, color);
+    draw_line(bottom_left, top_left, color);
+}
+
+void debby::screen::draw_filled_rect(const glm::vec2 &center,
+                                     const glm::vec2 &size,
+                                     const Color color) noexcept {
+    for (int y = 0; y < size.x; y++) {
+        for (int x = 0; x < size.y; x++) {
+            auto x1{static_cast<int>(center.x + x)};
+            auto y1{static_cast<int>(center.y + y)};
+            back_buffer.set_pixel(x1, y1, color);
+        }
+    }
+}
+
+void debby::screen::clear_renderer() noexcept {
+    assert(renderer);
+    SDL_SetRenderDrawColor(renderer, color::s_black.r, color::s_black.g,
+                           color::s_black.b, color::s_black.a);
+    SDL_RenderClear(renderer);
+}
+
+void debby::screen::swap_buffers() noexcept {
+    assert(front_buffer && back_buffer.buffer && renderer);
+    SDL_UpdateTexture(front_buffer, NULL, back_buffer.buffer,
+                      display_mode.w * sizeof(uint32_t));
+    SDL_RenderCopyEx(renderer, front_buffer, NULL, NULL, 0, NULL,
+                     SDL_FLIP_NONE);
+}
+
+void debby::screen::render_present() noexcept {
+    assert(renderer);
+    SDL_RenderPresent(renderer);
+}
+
 void debby::screen::destroy() noexcept {
-    if (window) {
-        SDL_DestroyWindow(window);
-        window = nullptr;
-        debby::log::verbose("destroyed SDL window\n");
+    back_buffer.destroy();
+    if (front_buffer) {
+        SDL_DestroyTexture(front_buffer);
+        front_buffer = nullptr;
+        log::verbose("destroyed frontbuffer");
     }
     if (renderer) {
         SDL_DestroyRenderer(renderer);
         renderer = nullptr;
-        debby::log::verbose("destroyed SDL renderer\n");
+        log::verbose("destroyed SDL renderer");
     }
-    debby::log::verbose("quiting all SDL systems\n");
+    if (window) {
+        SDL_DestroyWindow(window);
+        window = nullptr;
+        log::verbose("destroyed SDL window");
+    }
+    log::verbose("quiting all SDL systems");
     SDL_QuitSubSystem(sdl_subsystems);
     SDL_Quit();
 }

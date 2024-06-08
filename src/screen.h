@@ -4,12 +4,33 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
 
-namespace debby::screen {
-extern SDL_DisplayMode display_mode;
-extern SDL_Window* window;
-extern SDL_Renderer* renderer;
+#include <glm/vec2.hpp>
 
-bool initialize(int w, int h) noexcept;
+#include "./globals.h"
+
+namespace debby::screen {
+
+bool initialize(Context &ctx) noexcept;
+
+void draw_vec2(const glm::vec2 &vec, const Color color) noexcept;
+
+void draw_line(const glm::vec2 &p0, const glm::vec2 &p1,
+               const Color color) noexcept;
+
+void draw_outlined_rect(const glm::vec2 &center, const glm::vec2 &size,
+                        const Color color) noexcept;
+
+void draw_filled_rect(const glm::vec2 &center, const glm::vec2 &size,
+                      const Color color) noexcept;
+
+SDL_Renderer *get_renderer() noexcept;
+
+void clear_renderer() noexcept;
+
+void swap_buffers() noexcept;
+
+void render_present() noexcept;
+
 void destroy() noexcept;
 }  // namespace debby::screen
 
