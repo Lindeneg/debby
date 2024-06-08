@@ -24,6 +24,7 @@ static void log_msg(debby::log::LogLevel level, const char *format,
                     va_list args, ...) {
     printf("[%c] ", LOG_LEVEL_NAME[level]);
     vprintf(format, args);
+    printf("\n");
 }
 
 debby::log::LogLevel debby::log::get_level() noexcept { return log_level; }
