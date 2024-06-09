@@ -9,11 +9,21 @@ namespace debby {
 
 class GameManager {
    private:
+    static uint32_t _sdl_subsystem_flags;
+
     bool _is_running;
     SDL_Window* _window;
     SDL_Renderer* _renderer;
 
-    void set_render_draw_color(Color color);
+    SDL_DisplayMode _display_mode;
+    SDL_Event _event;
+
+    float _delta_time;
+    int _previous_frame_time;
+
+    bool _initialize_sdl();
+    void _respect_frame_target();
+    void _set_render_draw_color(Color color);
 
    public:
     int window_width;

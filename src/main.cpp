@@ -1,6 +1,6 @@
 #include <cstdlib>
 
-#include "./game-manager.h"
+#include "./game_manager.h"
 #include "./log.h"
 
 int main(int argc, char *argv[]) {

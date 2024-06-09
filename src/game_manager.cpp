@@ -1,4 +1,4 @@
-#include "game-manager.h"
+#include "game_manager.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_image.h>
@@ -7,46 +7,65 @@
 #include "./log.h"
 #include "./utils.h"
 
-static uint32_t sdl_subsystems{SDL_INIT_VIDEO | SDL_INIT_TIMER |
-                               SDL_INIT_EVENTS};
-static SDL_DisplayMode display_mode{};
-static SDL_Event event{};
-static float delta_time{};
-static Uint32 previous_frame_time{};
+uint32_t debby::GameManager::_sdl_subsystem_flags{
+    SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS};
 
-static bool initialize_sdl() {
-    if (SDL_WasInit(sdl_subsystems)) {
-        debby::log::error("SDL has already been initialized");
+debby::GameManager::GameManager()
+    : _is_running(false),
+      _window(nullptr),
+      _renderer(nullptr),
+      _display_mode({}),
+      _event({}),
+      _delta_time(0),
+      _previous_frame_time(0) {}
+
+debby::GameManager::~GameManager() { destroy(); }
+
+bool debby::GameManager::_initialize_sdl() {
+    if (SDL_WasInit(_sdl_subsystem_flags)) {
+        log::error("SDL has already been initialized");
         return true;
     }
-    if (SDL_Init(sdl_subsystems) != 0) {
-        debby::log::error("failed to initialize SDL %s", SDL_GetError());
+    if (SDL_Init(_sdl_subsystem_flags) != 0) {
+        log::error("failed to initialize SDL %s", SDL_GetError());
         return false;
     }
     if (IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG) == 0) {
-        debby::log::error("failed to initialize SDL Image %s", SDL_GetError());
+        log::error("failed to initialize SDL Image %s", SDL_GetError());
         return false;
     }
     return true;
 }
 
-debby::GameManager::GameManager()
-    : _is_running(false), _window(nullptr), _renderer(nullptr) {}
+void debby::GameManager::_respect_frame_target() {
+    int time_to_wait =
+        constants::FRAME_TARGET - (SDL_GetTicks() - _previous_frame_time);
+    // only delay if too fast
+    if (time_to_wait > 0 && time_to_wait < constants::FRAME_TARGET) {
+        SDL_Delay(time_to_wait);
+    }
+    // calculate delta time
+    _delta_time = (SDL_GetTicks() - _previous_frame_time) / 1000.0f;
+    // clamp value (if running in debugger dt will be messed up)
+    _delta_time = (utils::greater(_delta_time, constants::MAXIMUM_DT))
+                      ? constants::MAXIMUM_DT
+                      : _delta_time;
+    // update previous frame time
+    _previous_frame_time = SDL_GetTicks();
+}
 
-debby::GameManager::~GameManager() { destroy(); }
-
-void debby::GameManager::set_render_draw_color(Color color) {
+void debby::GameManager::_set_render_draw_color(Color color) {
     assert(_renderer);
     SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
 }
 
 bool debby::GameManager::initialize() {
-    if (!initialize_sdl()) {
+    if (!_initialize_sdl()) {
         return false;
     }
-    SDL_GetCurrentDisplayMode(0, &display_mode);
-    window_width = display_mode.w;
-    window_height = display_mode.h;
+    SDL_GetCurrentDisplayMode(0, &_display_mode);
+    window_width = _display_mode.w;
+    window_height = _display_mode.h;
     if (!_window) {
         _window = SDL_CreateWindow("Debby", SDL_WINDOWPOS_CENTERED,
                                    SDL_WINDOWPOS_CENTERED, window_width,
@@ -91,13 +110,13 @@ void debby::GameManager::run() {
 }
 
 void debby::GameManager::process_input() {
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
+    while (SDL_PollEvent(&_event)) {
+        switch (_event.type) {
             case SDL_QUIT:
                 _is_running = false;
                 break;
             case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                if (_event.key.keysym.sym == SDLK_ESCAPE) {
                     _is_running = false;
                 }
                 break;
@@ -106,27 +125,13 @@ void debby::GameManager::process_input() {
 }
 
 void debby::GameManager::update() {
-    int time_to_wait =
-        constants::FRAME_TARGET - (SDL_GetTicks() - previous_frame_time);
-    // only delay if too fast
-    if (time_to_wait > 0 && time_to_wait < constants::FRAME_TARGET) {
-        SDL_Delay(time_to_wait);
-    }
-    // calculate delta time
-    delta_time = ((float)SDL_GetTicks() - (float)previous_frame_time) / 1000.0f;
-    // clamp value (if running in debugger dt will be messed up)
-    delta_time = (utils::greater(delta_time, constants::MAXIMUM_DT))
-                     ? constants::MAXIMUM_DT
-                     : delta_time;
-    // update previous frame time
-    previous_frame_time = SDL_GetTicks();
-
+    _respect_frame_target();
     // update position
     player_pos += player_velocity;
 }
 
 void debby::GameManager::render() {
-    set_render_draw_color(color::black);
+    _set_render_draw_color(color::black);
     SDL_RenderClear(_renderer);
 
     auto texture{
@@ -152,6 +157,6 @@ void debby::GameManager::destroy() {
         log::verbose("destroyed SDL window");
     }
     log::verbose("quitting all SDL systems");
-    SDL_QuitSubSystem(sdl_subsystems);
+    SDL_QuitSubSystem(_sdl_subsystem_flags);
     SDL_Quit();
 }
