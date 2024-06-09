@@ -105,8 +105,8 @@ bool debby::screen::initialize(Context &ctx) noexcept {
             log::error("failed to create SDL window %s", SDL_GetError());
             return false;
         }
-        log::verbose("initialized SDL window (%d,%d)", ctx.display_size.x,
-                     ctx.display_size.y);
+        log::verbose("initialized SDL window with size (%d,%d)",
+                     ctx.display_size.x, ctx.display_size.y);
     }
     if (!renderer) {
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -133,6 +133,7 @@ bool debby::screen::initialize(Context &ctx) noexcept {
         log::verbose("initialized frontbuffer");
     }
     back_buffer.initialize();
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
     return true;
 }
 

@@ -10,7 +10,7 @@ static SDL_Event event{};
 static bool is_running{false};
 
 bool debby::game::initialize() noexcept {
-//    context.resolution = glm::ivec2(500, 500);
+    //    context.resolution = glm::ivec2(800, 600);
     if (!screen::initialize(context)) {
         return false;
     }
@@ -48,6 +48,15 @@ void debby::game::process_input() noexcept {
 
 void debby::game::update() noexcept {}
 
-void debby::game::render() noexcept {}
+void debby::game::render() noexcept {
+    debby::screen::draw_line(glm::vec2(0, 0), glm::vec2(100, 100),
+                             debby::color::red);
+    debby::screen::draw_outlined_rect(glm::vec2(200, 200), glm::vec2(50, 50),
+                                      debby::color::magenta);
+    debby::screen::draw_filled_rect(glm::vec2(300, 300), glm::vec2(50, 50),
+                                    debby::color::blue);
+    debby::screen::swap_buffers();
+    debby::screen::render_present();
+}
 
 void debby::game::destroy() noexcept { screen::destroy(); }
