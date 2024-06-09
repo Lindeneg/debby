@@ -5,11 +5,14 @@
 
 #include "./globals.h"
 #include "./log.h"
+#include "./utils.h"
 
 static uint32_t sdl_subsystems{SDL_INIT_VIDEO | SDL_INIT_TIMER |
                                SDL_INIT_EVENTS};
 static SDL_DisplayMode display_mode{};
 static SDL_Event event{};
+static float delta_time{};
+static Uint32 previous_frame_time{};
 
 static bool initialize_sdl() {
     if (SDL_WasInit(sdl_subsystems)) {
@@ -70,7 +73,13 @@ bool debby::GameManager::initialize() {
     return true;
 }
 
-void debby::GameManager::setup() {}
+glm::vec2 player_pos{};
+glm::vec2 player_velocity{};
+
+void debby::GameManager::setup() {
+    player_pos = {10, 20};
+    player_velocity = {0.5, 0};
+}
 
 void debby::GameManager::run() {
     setup();
@@ -97,7 +106,23 @@ void debby::GameManager::process_input() {
 }
 
 void debby::GameManager::update() {
-    // TODO: Update game objects...
+    int time_to_wait =
+        constants::FRAME_TARGET - (SDL_GetTicks() - previous_frame_time);
+    // only delay if too fast
+    if (time_to_wait > 0 && time_to_wait < constants::FRAME_TARGET) {
+        SDL_Delay(time_to_wait);
+    }
+    // calculate delta time
+    delta_time = ((float)SDL_GetTicks() - (float)previous_frame_time) / 1000.0f;
+    // clamp value (if running in debugger dt will be messed up)
+    delta_time = (utils::greater(delta_time, constants::MAXIMUM_DT))
+                     ? constants::MAXIMUM_DT
+                     : delta_time;
+    // update previous frame time
+    previous_frame_time = SDL_GetTicks();
+
+    // update position
+    player_pos += player_velocity;
 }
 
 void debby::GameManager::render() {
@@ -105,10 +130,12 @@ void debby::GameManager::render() {
     SDL_RenderClear(_renderer);
 
     auto texture{
-        IMG_LoadTexture(_renderer, "./assets/Ground/TexturedGrass.png")};
+        IMG_LoadTexture(_renderer, "./assets/Characters/Champions/Zhinja.png")};
 
-    SDL_Rect dst_rect{10, 10, 32, 32};
-    SDL_RenderCopy(_renderer, texture, NULL, &dst_rect);
+    SDL_Rect src_rect{0, 0, 16, 16};
+    SDL_Rect dst_rect{static_cast<int>(player_pos.x),
+                      static_cast<int>(player_pos.y), 32, 32};
+    SDL_RenderCopy(_renderer, texture, &src_rect, &dst_rect);
 
     SDL_RenderPresent(_renderer);
 }
