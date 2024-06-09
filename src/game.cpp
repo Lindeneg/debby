@@ -10,6 +10,7 @@ static SDL_Event event{};
 static bool is_running{false};
 
 bool debby::game::initialize() noexcept {
+//    context.resolution = glm::ivec2(500, 500);
     if (!screen::initialize(context)) {
         return false;
     }

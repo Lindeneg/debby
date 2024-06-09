@@ -12,6 +12,7 @@ namespace debby {
 struct Context {
     float delta_time;
     glm::ivec2 display_size;
+    glm::ivec2 resolution;
 };
 
 using GameObjectName = std::string;

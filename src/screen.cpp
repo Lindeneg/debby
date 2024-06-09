@@ -11,8 +11,7 @@
 #include "./log.h"
 #include "./mem.h"
 
-class BackBuffer {
-   public:
+struct BackBuffer {
     debby::Color *buffer;
 
     BackBuffer();
@@ -32,6 +31,7 @@ static uint32_t sdl_subsystems{SDL_INIT_VIDEO | SDL_INIT_TIMER |
                                SDL_INIT_EVENTS};
 static SDL_DisplayMode display_mode{SDL_DisplayMode()};
 static BackBuffer back_buffer{BackBuffer()};
+static glm::ivec2 *resolution{nullptr};
 static SDL_Texture *front_buffer{nullptr};
 static SDL_Window *window{nullptr};
 static SDL_Renderer *renderer{nullptr};
@@ -57,22 +57,24 @@ BackBuffer::~BackBuffer() { destroy(); }
 
 void BackBuffer::initialize() noexcept {
     assert(!buffer && "back buffer already initialized");
-    buffer =
-        debby::mem::allocate<debby::Color>(display_mode.w * display_mode.h);
+    assert(resolution);
+    buffer = debby::mem::allocate<debby::Color>(resolution->x * resolution->y);
+    debby::log::verbose("initialized backbuffer with resolution (%d,%d)",
+                        resolution->x, resolution->y);
     clear();
 }
 
 void BackBuffer::set_pixel(const int x, const int y,
                            const debby::Color color) const noexcept {
-    assert(buffer);
-    if (x >= 0 && x < display_mode.w && y >= 0 && y < display_mode.h) {
-        buffer[(display_mode.w * y) + x] = color;
+    assert(buffer && resolution);
+    if (x >= 0 && x < resolution->x && y >= 0 && y < resolution->y) {
+        buffer[(resolution->x * y) + x] = color;
     }
 }
 
 void BackBuffer::clear() const noexcept {
-    assert(buffer);
-    for (int i = 0; i < display_mode.w * display_mode.h; i++) {
+    assert(buffer && resolution);
+    for (int i = 0; i < resolution->x * resolution->y; i++) {
         buffer[i] = debby::color::black;
     }
 }
@@ -91,6 +93,10 @@ bool debby::screen::initialize(Context &ctx) noexcept {
     }
     SDL_GetCurrentDisplayMode(0, &display_mode);
     ctx.display_size = glm::ivec2(display_mode.w, display_mode.h);
+    if (ctx.resolution.x == 0 || ctx.resolution.y == 0) {
+        ctx.resolution = ctx.display_size;
+    }
+    resolution = &ctx.resolution;
     if (!window) {
         window = SDL_CreateWindow("Debby", SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, ctx.display_size.x,
@@ -113,9 +119,9 @@ bool debby::screen::initialize(Context &ctx) noexcept {
         log::verbose("initialized SDL renderer");
     }
     if (!front_buffer) {
-        front_buffer = SDL_CreateTexture(
-            renderer, constants::PIXEL_FORMAT, SDL_TEXTUREACCESS_STREAMING,
-            ctx.display_size.x, ctx.display_size.y);
+        front_buffer = SDL_CreateTexture(renderer, constants::PIXEL_FORMAT,
+                                         SDL_TEXTUREACCESS_STREAMING,
+                                         resolution->x, resolution->y);
         if (!front_buffer) {
             log::error("failed to create frontbuffer %s", SDL_GetError());
             SDL_DestroyRenderer(renderer);
@@ -213,7 +219,7 @@ void debby::screen::clear_renderer() noexcept {
 void debby::screen::swap_buffers() noexcept {
     assert(front_buffer && back_buffer.buffer && renderer);
     SDL_UpdateTexture(front_buffer, NULL, back_buffer.buffer,
-                      display_mode.w * sizeof(uint32_t));
+                      resolution->x * sizeof(uint32_t));
     SDL_RenderCopyEx(renderer, front_buffer, NULL, NULL, 0, NULL,
                      SDL_FLIP_NONE);
 }
