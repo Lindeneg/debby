@@ -13,13 +13,13 @@ static inline T debby_abs(T x) noexcept {
 template <typename T>
 static inline bool debby_equal_rel(T a, T b) noexcept {
     return (debby_abs(a - b) <= (std::max(debby_abs(a), debby_abs(b)) *
-                                 debby::constants::REL_EPSILION));
+                                 debby::constants::REL_EPSILON));
 }
 
 namespace debby::utils {
 template <typename T>
 inline bool equal(T a, T b) noexcept {
-    if (debby_abs(a - b) <= debby::constants::ABS_EPSILION) {
+    if (debby_abs(a - b) <= debby::constants::ABS_EPSILON) {
         return true;
     }
     return debby_equal_rel(a, b);
@@ -71,9 +71,6 @@ template <typename T>
 inline T to_degrees(T radians) noexcept {
     return (radians * 180.f) / constants::PI;
 }
-
-SColor color_to_s_color(const Color color) noexcept;
-Color s_color_to_color(const SColor s_color) noexcept;
 }  // namespace debby::utils
 
 #endif  // DEBBY_UTILS_H_
