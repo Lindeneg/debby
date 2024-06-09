@@ -101,13 +101,14 @@ void debby::GameManager::update() {
 }
 
 void debby::GameManager::render() {
-    set_render_draw_color(color::dark_gray);
+    set_render_draw_color(color::black);
     SDL_RenderClear(_renderer);
 
-    // Draw a rectangle
-    set_render_draw_color(color::red);
-    SDL_Rect player = {10, 10, 20, 20};
-    SDL_RenderFillRect(_renderer, &player);
+    auto texture{
+        IMG_LoadTexture(_renderer, "./assets/Ground/TexturedGrass.png")};
+
+    SDL_Rect dst_rect{10, 10, 32, 32};
+    SDL_RenderCopy(_renderer, texture, NULL, &dst_rect);
 
     SDL_RenderPresent(_renderer);
 }
