@@ -25,7 +25,7 @@ enum LayerType {
 namespace debby::constants {
 constexpr int FPS{60};
 constexpr int FRAME_TARGET{1000 / FPS};
-constexpr float MAXIMUM_DT{0.05f};
+constexpr double MAXIMUM_DT{0.05};
 
 constexpr double REL_EPSILON{1e-8};
 constexpr double ABS_EPSILON{1e-12};
