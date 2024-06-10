@@ -24,6 +24,7 @@ if (WIN32)
         "${CMAKE_SOURCE_DIR}/libs/SDL2/windows/SDL2.lib"
         "${CMAKE_SOURCE_DIR}/libs/SDL2/windows/SDL2_image.lib"
         "${CMAKE_SOURCE_DIR}/libs/SDL2/windows/SDL2_ttf.lib"
-        "${CMAKE_SOURCE_DIR}/libs/lua/windows/lua54.lib")
+        "${CMAKE_SOURCE_DIR}/libs/lua/windows/lua54.lib"
+        "${CMAKE_SOURCE_DIR}/libs/spdlog/windows/spdlogd.lib")
 endif()
 
