@@ -14,10 +14,6 @@ int debby::ecs::Entity::get_id() const { return _id; }
 //////// SYSTEM IMPLEMENTATION /////////
 ////////////////////////////////////////
 
-debby::ecs::System::System() {}
-
-debby::ecs::System::~System() {}
-
 const debby::ecs::ComponentSignature& debby::ecs::System::get_signature()
     const {
     return _signature;
@@ -33,11 +29,10 @@ void debby::ecs::System::add_entity(Entity entity) {
 }
 
 void debby::ecs::System::remove_entity(Entity entity) {
-    _entities.erase(std::remove_if(_entities.begin(), _entities.end(),
-                                   [&](Entity other) {
-                                       return other.get_id() == entity.get_id();
-                                   }),
-                    _entities.end());
+    _entities.erase(
+        std::remove_if(_entities.begin(), _entities.end(),
+                       [&](Entity other) { return entity == other; }),
+        _entities.end());
 }
 
 ////////////////////////////////////////

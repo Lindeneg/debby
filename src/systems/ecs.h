@@ -37,8 +37,7 @@ class Component : public IComponent {
 
 /*
  * Entity is a game object that can contain
- * a collection of different components
- * */
+ * a collection of different components */
 class Entity {
    private:
     int _id;
@@ -47,6 +46,8 @@ class Entity {
     Entity(int id);
 
     int get_id() const;
+
+    bool operator==(const Entity& other) const { return _id == other._id; }
 };
 
 ////////////////////////////////////////
@@ -54,16 +55,16 @@ class Entity {
 ////////////////////////////////////////
 
 /*
- * System processes entities that contain a specific signature
- * */
+ * System processes entities that
+ * contain a specific signature */
 class System {
    private:
     ComponentSignature _signature;
     std::vector<Entity> _entities;
 
    public:
-    System();
-    ~System();
+    System() = default;
+    ~System() = default;
 
     const ComponentSignature& get_signature() const;
 
