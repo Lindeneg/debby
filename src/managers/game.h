@@ -1,13 +1,17 @@
-#ifndef DEBBY_MANAGERS_GAME_MANAGER_H_
-#define DEBBY_MANAGERS_GAME_MANAGER_H_
+#ifndef DEBBY_MANAGERS_GAME_H_
+#define DEBBY_MANAGERS_GAME_H_
 
 #include <SDL2/SDL.h>
 
 #include "../common/globals.h"
 
-namespace debby {
+namespace debby::manager {
 
-class GameManager {
+/*
+ * Game is responsible for initializing SDL,
+ * setting up game data, running the game-loop,
+ * and updating/rendering active entities */
+class Game {
    private:
     static uint32_t _sdl_subsystem_flags;
 
@@ -31,8 +35,8 @@ class GameManager {
     int window_width;
     int window_height;
 
-    GameManager();
-    ~GameManager();
+    Game();
+    ~Game();
 
     inline void cap_frame_rate() { _do_cap_frame_rate = true; }
 
@@ -46,6 +50,6 @@ class GameManager {
     void render();
     void destroy();
 };
-}  // namespace debby
+}  // namespace debby::manager
 
-#endif  // DEBBY_MANAGERS_GAME_MANAGER_H_
+#endif  // DEBBY_MANAGERS_GAME_H_

@@ -3,34 +3,34 @@
 
 #include <SDL2/SDL_pixels.h>
 
-#include <atomic>
-#include <glm/vec2.hpp>
-
 namespace debby {
 
-using GameObjectId = std::atomic_uint32_t;
 using Color = SDL_Color;
-
-enum LayerType {
-    TILEMAP_LAYER,
-    TERRAIN_LAYER,
-    ENEMY_LAYER,
-    COLLIDABLE_LAYER,
-    PLAYER_LAYER,
-    PROJECTILE_LAYER,
-    UI_LAYER
-};
 }  // namespace debby
 
 namespace debby::constants {
+// target FPS for fixed updates
 constexpr int FPS{60};
+
+// target time in ms for each frame
 constexpr int FRAME_TARGET{1000 / FPS};
+
+// maximum delta time (useful if running in debugger)
 constexpr double MAXIMUM_DT{0.05};
 
+/* used to produce epsilon relative
+ * to value of some given operands */
 constexpr double REL_EPSILON{1e-8};
+
+// absolute epsilon value
 constexpr double ABS_EPSILON{1e-12};
 
-constexpr std::size_t numOfLayers{7};
+// approximation of PI
+constexpr double PI{3.14159265359};
+
+// twice the pi, double the fun!
+constexpr double PI2{PI * 2};
+
 }  // namespace debby::constants
 
 namespace debby::color {
