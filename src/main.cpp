@@ -3,7 +3,7 @@
 
 #include <cstdlib>
 
-#include "./game_manager.h"
+#include "./managers/game_manager.h"
 
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::debug);
