@@ -1,10 +1,12 @@
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
+
 #include <cstdlib>
 
 #include "./game_manager.h"
-#include "./log.h"
 
 int main(int argc, char *argv[]) {
-    debby::log::set_level(debby::log::LOG_LEVEL_VERBOSE);
+    spdlog::set_level(spdlog::level::debug);
     debby::GameManager game_manager{};
     if (!game_manager.initialize()) {
         return EXIT_FAILURE;

@@ -2,9 +2,9 @@
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_image.h>
+#include <spdlog/spdlog.h>
 
 #include "./globals.h"
-#include "./log.h"
 #include "./utils.h"
 
 uint32_t debby::GameManager::_sdl_subsystem_flags{
@@ -12,6 +12,7 @@ uint32_t debby::GameManager::_sdl_subsystem_flags{
 
 debby::GameManager::GameManager()
     : _is_running(false),
+      _do_cap_frame_rate(false),
       _window(nullptr),
       _renderer(nullptr),
       _display_mode({}),
@@ -23,29 +24,36 @@ debby::GameManager::~GameManager() { destroy(); }
 
 bool debby::GameManager::_initialize_sdl() {
     if (SDL_WasInit(_sdl_subsystem_flags)) {
-        log::error("SDL has already been initialized");
+        spdlog::error("SDL has already been initialized");
         return true;
     }
     if (SDL_Init(_sdl_subsystem_flags) != 0) {
-        log::error("failed to initialize SDL %s", SDL_GetError());
+        spdlog::error("failed to initialize SDL {0}", SDL_GetError());
         return false;
     }
     if (IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG) == 0) {
-        log::error("failed to initialize SDL Image %s", SDL_GetError());
+        spdlog::error("failed to initialize SDL Image {0}", SDL_GetError());
         return false;
     }
     return true;
 }
 
-void debby::GameManager::_respect_frame_target() {
+void debby::GameManager::_cap_frame_rate() {
     int time_to_wait =
         constants::FRAME_TARGET - (SDL_GetTicks() - _previous_frame_time);
     // only delay if too fast
     if (time_to_wait > 0 && time_to_wait < constants::FRAME_TARGET) {
         SDL_Delay(time_to_wait);
     }
+}
+
+void debby::GameManager::_calculate_delta_time() {
+    if (_do_cap_frame_rate) {
+        _cap_frame_rate();
+    }
     // calculate delta time
-    _delta_time = (SDL_GetTicks() - _previous_frame_time) / 1000.0f;
+    _delta_time =
+        static_cast<double>(SDL_GetTicks() - _previous_frame_time) / 1000.0;
     // clamp value (if running in debugger dt will be messed up)
     _delta_time = (utils::greater(_delta_time, constants::MAXIMUM_DT))
                       ? constants::MAXIMUM_DT
@@ -71,21 +79,21 @@ bool debby::GameManager::initialize() {
                                    SDL_WINDOWPOS_CENTERED, window_width,
                                    window_height, SDL_WINDOW_BORDERLESS);
         if (!_window) {
-            log::error("failed to create SDL window %s", SDL_GetError());
+            spdlog::error("failed to create SDL window {0}", SDL_GetError());
             return false;
         }
-        log::verbose("initialized SDL window (%d,%d)", window_width,
-                     window_height);
+        spdlog::debug("initialized SDL window ({0:d},{1:d})", window_width,
+                      window_height);
     }
     if (!_renderer) {
         _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
         if (!_renderer) {
-            log::error("failed to create SDL renderer %s", SDL_GetError());
+            spdlog::error("failed to create SDL renderer {0}", SDL_GetError());
             SDL_DestroyWindow(_window);
             _window = nullptr;
             return false;
         }
-        log::verbose("initialized SDL renderer");
+        spdlog::debug("initialized SDL renderer");
     }
     SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN);
     _is_running = true;
@@ -97,7 +105,7 @@ glm::vec2 player_velocity{};
 
 void debby::GameManager::setup() {
     player_pos = {10, 20};
-    player_velocity = {0.5, 0};
+    player_velocity = {100, 0};
 }
 
 void debby::GameManager::run() {
@@ -125,9 +133,9 @@ void debby::GameManager::process_input() {
 }
 
 void debby::GameManager::update() {
-    _respect_frame_target();
+    _calculate_delta_time();
     // update position
-    player_pos += player_velocity;
+    player_pos += (player_velocity * static_cast<float>(_delta_time));
 }
 
 void debby::GameManager::render() {
@@ -149,14 +157,14 @@ void debby::GameManager::destroy() {
     if (_renderer) {
         SDL_DestroyRenderer(_renderer);
         _renderer = nullptr;
-        log::verbose("destroyed SDL renderer");
+        spdlog::debug("destroyed SDL renderer");
     }
     if (_window) {
         SDL_DestroyWindow(_window);
         _window = nullptr;
-        log::verbose("destroyed SDL window");
+        spdlog::debug("destroyed SDL window");
     }
-    log::verbose("quitting all SDL systems");
+    IMG_Quit();
     SDL_QuitSubSystem(_sdl_subsystem_flags);
     SDL_Quit();
 }
