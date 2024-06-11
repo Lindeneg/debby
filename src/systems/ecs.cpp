@@ -22,8 +22,16 @@ bool debby::ecs::Entity::operator==(const Entity& other) const {
     return _id == other._id;
 }
 
+bool debby::ecs::Entity::operator!=(const Entity& other) const {
+    return _id != other._id;
+}
+
 bool debby::ecs::Entity::operator<(const Entity& other) const {
     return _id < other._id;
+}
+
+bool debby::ecs::Entity::operator>(const Entity& other) const {
+    return _id > other._id;
 }
 
 ////////////////////////////////////////
@@ -73,6 +81,7 @@ debby::ecs::Entity debby::ecs::Registry::create_entity() {
         _entity_component_signatures.resize(entity_id + 1);
     }
     Entity entity{entity_id};
+    entity.registry = this;
     _entities_add_queue.insert(entity);
     return entity;
 }

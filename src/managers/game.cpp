@@ -4,12 +4,12 @@
 #include <SDL2/SDL_image.h>
 #include <spdlog/spdlog.h>
 
+#include <glm/ext/vector_float2.hpp>
 #include <memory>
 
+#include "../common/components.h"
 #include "../common/globals.h"
 #include "../common/utils.h"
-#include "../components/transform.h"
-#include "glm/ext/vector_float2.hpp"
 
 ////////////////////////////////////////
 ///// GAME MANAGER IMPLEMENTATION //////
@@ -114,7 +114,8 @@ bool debby::manager::Game::initialize() {
 void debby::manager::Game::setup() {
     ecs::Entity zhinja{_registry->create_entity()};
 
-    _registry->add_component<components::Transform>(zhinja, glm::vec2(10, 10));
+    zhinja.add_component<components::Transform>(glm::vec2(10, 10));
+    zhinja.add_component<components::RigidBody>(glm::vec2(10, 0));
 }
 
 void debby::manager::Game::run() {

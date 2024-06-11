@@ -53,12 +53,29 @@ class Entity {
     int _id;
 
    public:
+    class Registry *registry;
+
     Entity(int id);
     ~Entity() = default;
 
     int get_id() const;
+
     bool operator==(const Entity &other) const;
+    bool operator!=(const Entity &other) const;
     bool operator<(const Entity &other) const;
+    bool operator>(const Entity &other) const;
+
+    template <typename TComponent, typename... TComponentArgs>
+    void add_component(TComponentArgs &&...args);
+
+    template <typename TComponent>
+    void remove_component();
+
+    template <typename TComponent>
+    bool has_component();
+
+    template <typename TComponent>
+    TComponent &get_component();
 };
 
 ////////////////////////////////////////
@@ -127,11 +144,9 @@ class Pool : public IPool {
 
     inline void set(unsigned int index, T object) { _data[index] = object; }
 
-    inline const T &get(unsigned int index) const { return _data[index]; }
+    inline T &get(unsigned int index) { return _data[index]; }
 
-    inline const T &operator[](unsigned int index) const {
-        return _data[index];
-    }
+    inline T &operator[](unsigned int index) { return _data[index]; }
 };
 
 ////////////////////////////////////////
@@ -198,7 +213,7 @@ class Registry {
         if (entity_id >= component_pool->get_size()) {
             component_pool->resize(_num_entities);
         }
-        spdlog::debug("adding component {0:d} to entity", component_id,
+        spdlog::debug("adding component {0:d} to entity {1:d}", component_id,
                       entity_id);
         TComponent new_component(std::forward<TComponentArgs>(args)...);
         component_pool->set(entity_id, new_component);
@@ -209,8 +224,8 @@ class Registry {
     inline void remove_component(Entity entity) {
         const int component_id{Component<TComponent>::_get_id()};
         const int entity_id{entity.get_id()};
-        spdlog::debug("removing component {0:d} from entity", component_id,
-                      entity_id);
+        spdlog::debug("removing component {0:d} from entity {1:d}",
+                      component_id, entity_id);
         _entity_component_signatures[entity_id].set(component_id, false);
     }
 
@@ -219,6 +234,15 @@ class Registry {
         const int component_id{Component<TComponent>::_get_id()};
         const int entity_id{entity.get_id()};
         return _entity_component_signatures[entity_id].test(component_id);
+    }
+
+    template <typename TComponent>
+    inline TComponent &get_component(Entity entity) const {
+        const int component_id{Component<TComponent>::_get_id()};
+        const int entity_id{entity.get_id()};
+        auto pool{std::static_pointer_cast<Pool<TComponent>>(
+            _component_pools[component_id])};
+        return pool->get(entity_id);
     }
 
     ////////////////////////////////////////
@@ -256,6 +280,35 @@ class Registry {
         return *(std::static_pointer_cast<TSystem>(system->second));
     }
 };
+
+////////////////////////////////////////
+//////// ENTITY IMPLEMENTATION /////////
+////////////////////////////////////////
+
+template <typename TComponent, typename... TComponentArgs>
+void Entity::add_component(TComponentArgs &&...args) {
+    assert(registry);
+    registry->add_component<TComponent>(*this, args...);
+}
+
+template <typename TComponent>
+void Entity::remove_component() {
+    assert(registry);
+    registry->remove_component<TComponent>(*this);
+}
+
+template <typename TComponent>
+bool Entity::has_component() {
+    assert(registry);
+    return registry->has_component<TComponent>(*this);
+}
+
+template <typename TComponent>
+TComponent &Entity::get_component() {
+    assert(registry);
+    return registry->get_component<TComponent>(*this);
+}
+
 }  // namespace debby::ecs
 
 #endif  // DEBBY_SYSTEMS_ECS_H_
