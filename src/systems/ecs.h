@@ -1,7 +1,13 @@
 #ifndef DEBBY_SYSTEMS_ECS_H_
 #define DEBBY_SYSTEMS_ECS_H_
 
+#include <spdlog/spdlog.h>
+
 #include <bitset>
+#include <set>
+#include <typeindex>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace debby::ecs {
@@ -20,13 +26,16 @@ class IComponent {
     static int _next_id;
 };
 
+/*
+ * Component */
 template <typename T>
 class Component : public IComponent {
     friend class System;
+    friend class Registry;
 
    private:
     inline static int _get_id() {
-        static auto id{_next_id++};
+        static int id{_next_id++};
         return id;
     }
 };
@@ -36,18 +45,19 @@ class Component : public IComponent {
 ////////////////////////////////////////
 
 /*
- * Entity is a game object that can contain
- * a collection of different components */
+ * Entity is effectively just an identifier used by a system
+ * and an registry to register components and process behavior */
 class Entity {
    private:
     int _id;
 
    public:
     Entity(int id);
+    ~Entity();
 
     int get_id() const;
-
-    bool operator==(const Entity& other) const { return _id == other._id; }
+    bool operator==(const Entity &other) const;
+    bool operator<(const Entity &other) const;
 };
 
 ////////////////////////////////////////
@@ -66,9 +76,9 @@ class System {
     System() = default;
     ~System() = default;
 
-    const ComponentSignature& get_signature() const;
+    const ComponentSignature &get_signature() const;
 
-    const std::vector<Entity>& get_entities() const;
+    const std::vector<Entity> &get_entities() const;
 
     void add_entity(Entity entity);
 
@@ -84,13 +94,164 @@ class System {
 };
 
 ////////////////////////////////////////
+/////////// POOL DEFINITION ////////////
+////////////////////////////////////////
+
+class IPool {
+   public:
+    virtual ~IPool() {}
+};
+
+/*
+ * Pool is a vector wrapper of type T objects */
+template <typename T>
+class Pool : IPool {
+   private:
+    std::vector<T> _data;
+
+   public:
+    Pool(unsigned int size = 100) { _data.resize(size); }
+
+    virtual ~Pool() = default;
+
+    inline bool is_empty() const { return _data.empty(); }
+
+    inline int get_size() const { return _data.size(); }
+
+    inline void resize(int new_size) { _data.resize(new_size); }
+
+    inline void clear() { _data.clear(); }
+
+    inline void add(T obj) { _data.push_back(obj); }
+
+    inline void set(unsigned int index, T object) { _data[index] = object; }
+
+    inline const T &get(unsigned int index) const { return _data[index]; }
+
+    inline const T &operator[](unsigned int index) const {
+        return _data[index];
+    }
+};
+
+////////////////////////////////////////
 ///////// REGISTRY DEFINITION //////////
 ////////////////////////////////////////
 
 /*
- * Registry
+ * Registry manages creation and destruction of entities,
+ * adding systems and adding components to entities
  * */
-class Registry {};
+class Registry {
+   private:
+    int _num_entities;
+
+    // each pool contains all data for
+    // a certain component type.
+    // Vector index is component id and
+    // pool index is entity id
+    std::vector<IPool *> _component_pools;
+
+    // vector of component signatures per entity
+    // vector index is equal to entity id
+    std::vector<ComponentSignature> _entity_component_signatures;
+
+    std::unordered_map<std::type_index, System *> _systems;
+
+    // save entities to add/remove, such that they can
+    // be processed in bulk at the end of each frame
+    std::set<Entity> _entities_add_queue;
+    std::set<Entity> _entities_remove_queue;
+
+   public:
+    Registry();
+    ~Registry();
+
+    void update();
+
+    ////////////////////////////////////////
+    ////////////// ENTITIES ////////////////
+    ////////////////////////////////////////
+
+    Entity create_entity();
+
+    ////////////////////////////////////////
+    ///////////// COMPONENTS ///////////////
+    ////////////////////////////////////////
+
+    template <typename TComponent, typename... TComponentArgs>
+    inline void add_component(Entity entity, TComponentArgs &&...args) {
+        const int component_id{Component<TComponent>::_get_id()};
+        if (component_id >= _component_pools.size()) {
+            // resize by one, since the resizing should be rare
+            // so using the default vector resize could be expensive
+            _component_pools.resize(component_id + 1, nullptr);
+        }
+        if (!_component_pools[component_id]) {
+            _component_pools[component_id] = new Pool<TComponent>();
+        }
+        Pool<TComponent> *component_pool{
+            Pool<TComponent>(_component_pools[component_id])};
+        const int entity_id{entity.get_id()};
+        if (entity_id >= component_pool->get_size()) {
+            component_pool->resize(_num_entities);
+        }
+        spdlog::debug("adding component {0:d} to entity", component_id,
+                      entity_id);
+        TComponent new_component(std::forward<TComponentArgs>(args)...);
+        component_pool->set(entity_id, new_component);
+        _entity_component_signatures[entity_id].set(component_id);
+    }
+
+    template <typename TComponent>
+    inline void remove_component(Entity entity) {
+        const int component_id{Component<TComponent>::_get_id()};
+        const int entity_id{entity.get_id()};
+        spdlog::debug("removing component {0:d} from entity", component_id,
+                      entity_id);
+        _entity_component_signatures[entity_id].set(component_id, false);
+    }
+
+    template <typename TComponent>
+    inline bool has_component(Entity entity) const {
+        const int component_id{Component<TComponent>::_get_id()};
+        const int entity_id{entity.get_id()};
+        return _entity_component_signatures[entity_id].test(component_id);
+    }
+
+    ////////////////////////////////////////
+    ////////////// SYSTEMS /////////////////
+    ////////////////////////////////////////
+
+    // add entity to systems where the component signature is set
+    void add_entity_to_systems(Entity entity);
+
+    template <typename TSystem, typename... TSystemArgs>
+    inline void add_system(TSystemArgs &&...args) {
+        TSystem *new_system(new TSystem(std::forward<TSystemArgs>(args)...));
+        _systems.insert(
+            std::make_pair(std::type_index(typeid(TSystem)), new_system));
+    }
+
+    template <typename TSystem>
+    inline void remove_system() {
+        const auto system{_systems.find(std::type_index(typeid(TSystem)))};
+        if (system != _systems.end()) {
+            _systems.erase(system);
+        }
+    }
+
+    template <typename TSystem>
+    inline bool has_system() const {
+        const auto system{_systems.find(std::type_index(typeid(TSystem)))};
+        return system != _systems.end();
+    }
+
+    template <typename TSystem>
+    inline const TSystem &get_system() const {
+        const auto system{_systems.find(std::type_index(typeid(TSystem)))};
+        return *(std::static_pointer_cast<TSystem>(system->second));
+    }
+};
 }  // namespace debby::ecs
 
 #endif  // DEBBY_SYSTEMS_ECS_H_
