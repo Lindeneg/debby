@@ -3,6 +3,9 @@
 
 #include <SDL2/SDL.h>
 
+#include <glm/ext/vector_int2.hpp>
+#include <memory>
+
 #include "../common/globals.h"
 #include "../systems/ecs.h"
 
@@ -30,10 +33,13 @@ class Game {
     SDL_DisplayMode _display_mode;
     SDL_Event _event;
 
-    ecs::Registry* _registry;
+    std::unique_ptr<ecs::Registry> _registry;
 
     double _delta_time;
     int _previous_frame_time;
+
+    int _window_width;
+    int _window_height;
 
     bool _initialize_sdl();
     void _cap_frame_rate();
@@ -41,15 +47,16 @@ class Game {
     void _set_render_draw_color(Color color);
 
    public:
-    int window_width;
-    int window_height;
-
     Game();
     ~Game();
 
     inline void cap_frame_rate() { _do_cap_frame_rate = true; }
-
     inline void uncap_frame_rate() { _do_cap_frame_rate = false; }
+    inline int get_window_width() const { return _window_width; }
+    inline int get_window_height() const { return _window_height; }
+    inline glm::ivec2 get_window_vec() const {
+        return glm::ivec2(_window_width, _window_height);
+    }
 
     bool initialize();
     void setup();

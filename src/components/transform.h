@@ -19,7 +19,7 @@ class Transform {
 
     Transform();
     Transform(glm::vec2 position, glm::vec2 scale, double rotation);
-    ~Transform();
+    ~Transform() = default;
 };
 }  // namespace debby::components
 

@@ -4,6 +4,8 @@
 #include <SDL2/SDL_image.h>
 #include <spdlog/spdlog.h>
 
+#include <memory>
+
 #include "../common/globals.h"
 #include "../common/utils.h"
 
@@ -21,9 +23,11 @@ debby::manager::Game::Game()
       _renderer(nullptr),
       _display_mode({}),
       _event({}),
-      _registry(nullptr),
+      _registry(std::make_unique<ecs::Registry>()),
       _delta_time(0),
-      _previous_frame_time(0) {}
+      _previous_frame_time(0),
+      _window_width(0),
+      _window_height(0) {}
 
 debby::manager::Game::~Game() { destroy(); }
 
@@ -77,18 +81,18 @@ bool debby::manager::Game::initialize() {
         return false;
     }
     SDL_GetCurrentDisplayMode(0, &_display_mode);
-    window_width = _display_mode.w;
-    window_height = _display_mode.h;
+    _window_width = _display_mode.w;
+    _window_height = _display_mode.h;
     if (!_window) {
         _window = SDL_CreateWindow("Debby", SDL_WINDOWPOS_CENTERED,
-                                   SDL_WINDOWPOS_CENTERED, window_width,
-                                   window_height, SDL_WINDOW_BORDERLESS);
+                                   SDL_WINDOWPOS_CENTERED, _window_width,
+                                   _window_height, SDL_WINDOW_BORDERLESS);
         if (!_window) {
             spdlog::error("failed to create SDL window {0}", SDL_GetError());
             return false;
         }
-        spdlog::debug("initialized SDL window ({0:d},{1:d})", window_width,
-                      window_height);
+        spdlog::debug("initialized SDL window ({0:d},{1:d})", _window_width,
+                      _window_height);
     }
     if (!_renderer) {
         _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
@@ -101,16 +105,11 @@ bool debby::manager::Game::initialize() {
         spdlog::debug("initialized SDL renderer");
     }
     SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN);
-    if (!_registry) {
-        _registry = new ecs::Registry();
-        spdlog::debug("initialized ECS Registry");
-    }
     _is_running = true;
     return true;
 }
 
 void debby::manager::Game::setup() {
-    assert(_registry);
     ecs::Entity zhinja{_registry->create_entity()};
     ecs::Entity zhinja2{_registry->create_entity()};
 }
@@ -158,10 +157,6 @@ void debby::manager::Game::render() {
 }
 
 void debby::manager::Game::destroy() {
-    if (_registry) {
-        delete _registry;
-        spdlog::debug("destroyed ECS registry");
-    }
     if (_renderer) {
         SDL_DestroyRenderer(_renderer);
         _renderer = nullptr;

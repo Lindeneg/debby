@@ -14,4 +14,3 @@ debby::components::Transform::Transform(glm::vec2 position, glm::vec2 scale,
     this->rotation = rotation;
 }
 
-debby::components::Transform::~Transform() {}

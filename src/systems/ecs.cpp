@@ -16,8 +16,6 @@ int debby::ecs::IComponent::_next_id{0};
 
 debby::ecs::Entity::Entity(const int id) : _id(id) {}
 
-debby::ecs::Entity::~Entity() {}
-
 int debby::ecs::Entity::get_id() const { return _id; }
 
 bool debby::ecs::Entity::operator==(const Entity& other) const {
@@ -65,8 +63,6 @@ debby::ecs::Registry::Registry()
       _systems({}),
       _entities_add_queue({}),
       _entities_remove_queue({}) {}
-
-debby::ecs::Registry::~Registry() {}
 
 debby::ecs::Entity debby::ecs::Registry::create_entity() {
     int entity_id{_num_entities++};
