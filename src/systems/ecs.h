@@ -288,7 +288,8 @@ class Registry {
 template <typename TComponent, typename... TComponentArgs>
 void Entity::add_component(TComponentArgs &&...args) {
     assert(registry);
-    registry->add_component<TComponent>(*this, args...);
+    registry->add_component<TComponent>(*this,
+                                        std::forward<TComponentArgs>(args)...);
 }
 
 template <typename TComponent>
