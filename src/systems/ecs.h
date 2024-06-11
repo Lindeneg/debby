@@ -106,7 +106,7 @@ class IPool {
 /*
  * Pool is a vector wrapper of type T objects */
 template <typename T>
-class Pool : IPool {
+class Pool : public IPool {
    private:
     std::vector<T> _data;
 
@@ -117,7 +117,7 @@ class Pool : IPool {
 
     inline bool is_empty() const { return _data.empty(); }
 
-    inline int get_size() const { return _data.size(); }
+    inline int get_size() const { return static_cast<int>(_data.size()); }
 
     inline void resize(int new_size) { _data.resize(new_size); }
 
@@ -182,7 +182,7 @@ class Registry {
     template <typename TComponent, typename... TComponentArgs>
     inline void add_component(Entity entity, TComponentArgs &&...args) {
         const int component_id{Component<TComponent>::_get_id()};
-        if (component_id >= _component_pools.size()) {
+        if (component_id >= static_cast<int>(_component_pools.size())) {
             // resize by one, since the resizing should be rare
             // so using the default vector resize could be expensive
             _component_pools.resize(component_id + 1, nullptr);
