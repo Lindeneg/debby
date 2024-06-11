@@ -72,10 +72,10 @@ class Entity {
     void remove_component();
 
     template <typename TComponent>
-    bool has_component();
+    bool has_component() const;
 
     template <typename TComponent>
-    TComponent &get_component();
+    TComponent &get_component() const;
 };
 
 ////////////////////////////////////////
@@ -298,13 +298,13 @@ void Entity::remove_component() {
 }
 
 template <typename TComponent>
-bool Entity::has_component() {
+bool Entity::has_component() const {
     assert(registry);
     return registry->has_component<TComponent>(*this);
 }
 
 template <typename TComponent>
-TComponent &Entity::get_component() {
+TComponent &Entity::get_component() const {
     assert(registry);
     return registry->get_component<TComponent>(*this);
 }
