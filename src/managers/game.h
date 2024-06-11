@@ -4,8 +4,13 @@
 #include <SDL2/SDL.h>
 
 #include "../common/globals.h"
+#include "../systems/ecs.h"
 
 namespace debby::manager {
+
+////////////////////////////////////////
+/////// GAME MANAGER DEFINITION ////////
+////////////////////////////////////////
 
 /*
  * Game is responsible for initializing SDL,
@@ -13,15 +18,19 @@ namespace debby::manager {
  * and updating/rendering active entities */
 class Game {
    private:
+    // SDL subsystems to initialize
     static uint32_t _sdl_subsystem_flags;
 
     bool _is_running;
     bool _do_cap_frame_rate;
+
     SDL_Window* _window;
     SDL_Renderer* _renderer;
 
     SDL_DisplayMode _display_mode;
     SDL_Event _event;
+
+    ecs::Registry* _registry;
 
     double _delta_time;
     int _previous_frame_time;

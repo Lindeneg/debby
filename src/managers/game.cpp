@@ -7,6 +7,10 @@
 #include "../common/globals.h"
 #include "../common/utils.h"
 
+////////////////////////////////////////
+///// GAME MANAGER IMPLEMENTATION //////
+////////////////////////////////////////
+
 uint32_t debby::manager::Game::_sdl_subsystem_flags{
     SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS};
 
@@ -17,6 +21,7 @@ debby::manager::Game::Game()
       _renderer(nullptr),
       _display_mode({}),
       _event({}),
+      _registry(nullptr),
       _delta_time(0),
       _previous_frame_time(0) {}
 
@@ -96,11 +101,19 @@ bool debby::manager::Game::initialize() {
         spdlog::debug("initialized SDL renderer");
     }
     SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN);
+    if (!_registry) {
+        _registry = new ecs::Registry();
+        spdlog::debug("initialized ECS Registry");
+    }
     _is_running = true;
     return true;
 }
 
-void debby::manager::Game::setup() {}
+void debby::manager::Game::setup() {
+    assert(_registry);
+    ecs::Entity zhinja{_registry->create_entity()};
+    ecs::Entity zhinja2{_registry->create_entity()};
+}
 
 void debby::manager::Game::run() {
     setup();
@@ -145,6 +158,10 @@ void debby::manager::Game::render() {
 }
 
 void debby::manager::Game::destroy() {
+    if (_registry) {
+        delete _registry;
+        spdlog::debug("destroyed ECS registry");
+    }
     if (_renderer) {
         SDL_DestroyRenderer(_renderer);
         _renderer = nullptr;
