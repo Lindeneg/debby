@@ -1,5 +1,5 @@
-#ifndef DEBBY_COMPONENTS_TRANSFORM_H_
-#define DEBBY_COMPONENTS_TRANSFORM_H_
+#ifndef DEBBY_COMMON_COMPONENTS_H_
+#define DEBBY_COMMON_COMPONENTS_H_
 
 #include <glm/ext/vector_float2.hpp>
 
@@ -25,6 +25,22 @@ class Transform {
     }
     ~Transform() = default;
 };
+
+////////////////////////////////////////
+//////// RIGIDBODY DEFINITION //////////
+////////////////////////////////////////
+
+/*
+ * RigidBody */
+class RigidBody {
+   public:
+    glm::vec2 velocity;
+
+    RigidBody(glm::vec2 velocity = glm::vec2(0, 0)) {
+        this->velocity = velocity;
+    }
+    ~RigidBody() = default;
+};
 }  // namespace debby::components
 
-#endif  // DEBBY_COMPONENTS_TRANSFORM_H_
+#endif  // DEBBY_COMMON_COMPONENTS_H_
