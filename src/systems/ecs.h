@@ -275,7 +275,7 @@ class Registry {
     }
 
     template <typename TSystem>
-    inline const TSystem &get_system() const {
+    inline TSystem &get_system() const {
         const auto system{_systems.find(std::type_index(typeid(TSystem)))};
         return *(std::static_pointer_cast<TSystem>(system->second));
     }

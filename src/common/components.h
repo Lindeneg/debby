@@ -41,6 +41,24 @@ class RigidBody {
     }
     ~RigidBody() = default;
 };
+
+////////////////////////////////////////
+///////// SPRITE DEFINITION ////////////
+////////////////////////////////////////
+
+/*
+ * Sprite */
+class Sprite {
+   public:
+    int width;
+    int height;
+
+    Sprite(int width = 0, int height = 0) {
+        this->width = width;
+        this->height = height;
+    }
+    ~Sprite() = default;
+};
 }  // namespace debby::components
 
 #endif  // DEBBY_COMMON_COMPONENTS_H_

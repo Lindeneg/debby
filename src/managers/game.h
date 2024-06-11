@@ -35,7 +35,7 @@ class Game {
 
     std::unique_ptr<ecs::Registry> _registry;
 
-    double _delta_time;
+    float _delta_time;
     int _previous_frame_time;
 
     int _window_width;

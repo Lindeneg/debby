@@ -16,14 +16,14 @@ constexpr int FPS{60};
 constexpr int FRAME_TARGET{1000 / FPS};
 
 // maximum delta time (useful if running in debugger)
-constexpr double MAXIMUM_DT{0.05};
+constexpr float MAXIMUM_DT{0.05f};
 
 /* used to produce epsilon relative
  * to value of some given operands */
-constexpr double REL_EPSILON{1e-8};
+constexpr float REL_EPSILON{1e-8f};
 
 // absolute epsilon value
-constexpr double ABS_EPSILON{1e-12};
+constexpr float ABS_EPSILON{1e-12f};
 
 // approximation of PI
 constexpr double PI{3.14159265359};

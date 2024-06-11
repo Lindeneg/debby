@@ -10,6 +10,8 @@
 #include "../common/components.h"
 #include "../common/globals.h"
 #include "../common/utils.h"
+#include "../systems/movement.h"
+#include "../systems/render.h"
 
 ////////////////////////////////////////
 ///// GAME MANAGER IMPLEMENTATION //////
@@ -64,7 +66,7 @@ void debby::manager::Game::_calculate_delta_time() {
     }
     // calculate delta time
     _delta_time =
-        static_cast<double>(SDL_GetTicks() - _previous_frame_time) / 1000.0;
+        static_cast<float>(SDL_GetTicks() - _previous_frame_time) / 1000.f;
     // clamp value (if running in debugger dt will be messed up)
     _delta_time = (utils::greater(_delta_time, constants::MAXIMUM_DT))
                       ? constants::MAXIMUM_DT
@@ -112,10 +114,20 @@ bool debby::manager::Game::initialize() {
 }
 
 void debby::manager::Game::setup() {
+    _registry->add_system<systems::Movement>();
+    _registry->add_system<systems::Render>();
+
     ecs::Entity zhinja{_registry->create_entity()};
 
-    zhinja.add_component<components::Transform>(glm::vec2(10, 10));
-    zhinja.add_component<components::RigidBody>(glm::vec2(10, 0));
+    zhinja.add_component<components::Transform>(glm::vec2(10.f, 30.f));
+    zhinja.add_component<components::RigidBody>(glm::vec2(10.f, 15.f));
+    zhinja.add_component<components::Sprite>(10, 10);
+
+    ecs::Entity zhinja2{_registry->create_entity()};
+
+    zhinja2.add_component<components::Transform>(glm::vec2(40.f, 50.f));
+    zhinja2.add_component<components::RigidBody>(glm::vec2(50.f, 15.f));
+    zhinja2.add_component<components::Sprite>(10, 10);
 }
 
 void debby::manager::Game::run() {
@@ -142,11 +154,17 @@ void debby::manager::Game::process_input() {
     }
 }
 
-void debby::manager::Game::update() { _calculate_delta_time(); }
+void debby::manager::Game::update() {
+    _calculate_delta_time();
+    _registry->get_system<systems::Movement>().update(_delta_time);
+    _registry->update();
+}
 
 void debby::manager::Game::render() {
     _set_render_draw_color(color::black);
     SDL_RenderClear(_renderer);
+
+    _registry->get_system<systems::Render>().update(_renderer);
 
     //    auto texture{
     //        IMG_LoadTexture(_renderer,
