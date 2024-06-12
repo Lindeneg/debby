@@ -15,6 +15,12 @@ void debby::managers::asset::add_texture(const std::string& texture_id,
     SDL_Texture* texture{
         IMG_LoadTexture(screen::get_renderer(), file_path.c_str())};
 
+    if (!texture) {
+        spdlog::error("failed to load texture {0} with path {1}", texture_id,
+                      file_path);
+        return;
+    }
+
     spdlog::debug("adding texture {0} with path {1}", texture_id, file_path);
 
     textures.emplace(texture_id, texture);
