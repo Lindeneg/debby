@@ -32,9 +32,10 @@ class RenderSystem : public ecs::System {
                 static_cast<int>(sprite.width * transform.scale.x),
                 static_cast<int>(sprite.height * transform.scale.y)};
 
-            SDL_RenderCopy(_renderer,
-                           managers::asset::get_texture(sprite.asset_id),
-                           &sprite.src_rect, &dst_rect);
+            SDL_RenderCopyEx(_renderer,
+                             managers::asset::get_texture(sprite.asset_id),
+                             &sprite.src_rect, &dst_rect, transform.rotation,
+                             NULL, SDL_FLIP_NONE);
         }
     }
 };

@@ -62,7 +62,9 @@ bool debby::managers::game::initialize() {
 void debby::managers::game::setup() {
     registry->add_system<MovementSystem>();
     registry->add_system<RenderSystem>();
+}
 
+void debby::managers::game::load_level(int level) {
     asset::add_texture("zhinja", "./assets/Characters/Champions/Zhinja.png");
     asset::add_texture("grum", "./assets/Characters/Champions/Grum.png");
 
