@@ -5,7 +5,7 @@
 #include <SDL2/SDL_render.h>
 
 #include "../common/components.h"
-#include "./ecs.h"
+#include "../ecs/ecs.h"
 
 namespace debby::systems {
 

@@ -1,5 +1,5 @@
-#ifndef DEBBY_SYSTEMS_ECS_H_
-#define DEBBY_SYSTEMS_ECS_H_
+#ifndef DEBBY_ECS_ECS_H_
+#define DEBBY_ECS_ECS_H_
 
 #include <spdlog/spdlog.h>
 
@@ -223,8 +223,8 @@ class Registry {
             component_pool->set_size(_entity_counter.load());
         }
 
-        spdlog::debug("adding {0} (Id: {1:d}) to entity (Id: {2:d})",
-                      typeid(TComponent).name(), component_id, entity_id);
+        spdlog::debug("adding {0} to entity {1:d}", typeid(TComponent).name(),
+                      entity_id);
 
         TComponent new_component(std::forward<TComponentArgs>(args)...);
         component_pool->set_item(entity_id, new_component);
@@ -236,8 +236,8 @@ class Registry {
         const Id component_id{Component<TComponent>::get_id()};
         const Id entity_id{entity.get_id()};
 
-        spdlog::debug("removing {0} (Id: {1:d}) from entity (Id: {2:d})",
-                      typeid(TComponent).name(), component_id, entity_id);
+        spdlog::debug("removing {0} from entity {1:d}",
+                      typeid(TComponent).name(), entity_id);
 
         _entity_component_signatures[entity_id].set(component_id, false);
     }
@@ -329,4 +329,4 @@ TComponent &Entity::get_component() const {
 
 }  // namespace debby::ecs
 
-#endif  // DEBBY_SYSTEMS_ECS_H_
+#endif  // DEBBY_ECS_ECS_H_

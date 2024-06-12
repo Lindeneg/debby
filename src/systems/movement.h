@@ -2,7 +2,7 @@
 #define DEBBY_SYSTEMS_MOVEMENT_H_
 
 #include "../common/components.h"
-#include "./ecs.h"
+#include "../ecs/ecs.h"
 
 namespace debby::systems {
 

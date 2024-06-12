@@ -2,11 +2,11 @@
 
 #include <cstdlib>
 
-#include "./managers/game.h"
+#include "./managers/game_manager.h"
 
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::trace);
-    debby::manager::Game game_manager{};
+    debby::manager::GameManager game_manager{};
     if (!game_manager.initialize()) {
         return EXIT_FAILURE;
     }

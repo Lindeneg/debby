@@ -1,4 +1,4 @@
-#include "game.h"
+#include "game_manager.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_image.h>
@@ -17,10 +17,10 @@
 ///// GAME MANAGER IMPLEMENTATION //////
 ////////////////////////////////////////
 
-uint32_t debby::manager::Game::_sdl_subsystem_flags{
+uint32_t debby::manager::GameManager::_sdl_subsystem_flags{
     SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS};
 
-debby::manager::Game::Game()
+debby::manager::GameManager::GameManager()
     : _is_running(false),
       _do_cap_frame_rate(false),
       _window(nullptr),
@@ -33,9 +33,9 @@ debby::manager::Game::Game()
       _window_width(0),
       _window_height(0) {}
 
-debby::manager::Game::~Game() { destroy(); }
+debby::manager::GameManager::~GameManager() { destroy(); }
 
-bool debby::manager::Game::_initialize_sdl() {
+bool debby::manager::GameManager::_initialize_sdl() {
     if (SDL_WasInit(_sdl_subsystem_flags)) {
         spdlog::error("SDL has already been initialized");
         return true;
@@ -51,7 +51,7 @@ bool debby::manager::Game::_initialize_sdl() {
     return true;
 }
 
-void debby::manager::Game::_cap_frame_rate() {
+void debby::manager::GameManager::_cap_frame_rate() {
     int time_to_wait =
         constants::FRAME_TARGET - (SDL_GetTicks() - _previous_frame_time);
     // only delay if too fast
@@ -60,7 +60,7 @@ void debby::manager::Game::_cap_frame_rate() {
     }
 }
 
-void debby::manager::Game::_calculate_delta_time() {
+void debby::manager::GameManager::_calculate_delta_time() {
     if (_do_cap_frame_rate) {
         _cap_frame_rate();
     }
@@ -75,12 +75,12 @@ void debby::manager::Game::_calculate_delta_time() {
     _previous_frame_time = SDL_GetTicks();
 }
 
-void debby::manager::Game::_set_render_draw_color(Color color) {
+void debby::manager::GameManager::_set_render_draw_color(Color color) {
     assert(_renderer);
     SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
 }
 
-bool debby::manager::Game::initialize() {
+bool debby::manager::GameManager::initialize() {
     if (!_initialize_sdl()) {
         return false;
     }
@@ -113,7 +113,7 @@ bool debby::manager::Game::initialize() {
     return true;
 }
 
-void debby::manager::Game::setup() {
+void debby::manager::GameManager::setup() {
     _registry->add_system<systems::Movement>();
     _registry->add_system<systems::Render>();
 
@@ -130,7 +130,7 @@ void debby::manager::Game::setup() {
     zhinja2.add_component<components::Sprite>(10, 10);
 }
 
-void debby::manager::Game::run() {
+void debby::manager::GameManager::run() {
     setup();
     while (_is_running) {
         process_input();
@@ -139,7 +139,7 @@ void debby::manager::Game::run() {
     }
 }
 
-void debby::manager::Game::process_input() {
+void debby::manager::GameManager::process_input() {
     while (SDL_PollEvent(&_event)) {
         switch (_event.type) {
             case SDL_QUIT:
@@ -154,13 +154,13 @@ void debby::manager::Game::process_input() {
     }
 }
 
-void debby::manager::Game::update() {
+void debby::manager::GameManager::update() {
     _calculate_delta_time();
     _registry->get_system<systems::Movement>().update(_delta_time);
     _registry->update();
 }
 
-void debby::manager::Game::render() {
+void debby::manager::GameManager::render() {
     _set_render_draw_color(color::black);
     SDL_RenderClear(_renderer);
 
@@ -178,7 +178,7 @@ void debby::manager::Game::render() {
     SDL_RenderPresent(_renderer);
 }
 
-void debby::manager::Game::destroy() {
+void debby::manager::GameManager::destroy() {
     if (_renderer) {
         SDL_DestroyRenderer(_renderer);
         _renderer = nullptr;
