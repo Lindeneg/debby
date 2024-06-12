@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-#include "./globals.h"
+#include "./globals.hpp"
 
 template <typename T>
 static inline T debby_abs(T x) noexcept {

@@ -6,8 +6,8 @@
 #include <glm/ext/vector_int2.hpp>
 #include <memory>
 
-#include "../common/globals.h"
-#include "../ecs/ecs.h"
+#include "../common/globals.hpp"
+#include "../ecs/ecs.hpp"
 
 namespace debby::manager {
 

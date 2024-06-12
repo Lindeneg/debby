@@ -4,8 +4,8 @@
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
-#include "../common/components.h"
-#include "../ecs/ecs.h"
+#include "../common/components.hpp"
+#include "../ecs/ecs.hpp"
 
 namespace debby::systems {
 

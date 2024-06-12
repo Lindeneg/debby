@@ -1,4 +1,4 @@
-#include "game_manager.h"
+#include "game_manager.hpp"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_image.h>
@@ -7,11 +7,11 @@
 #include <glm/ext/vector_float2.hpp>
 #include <memory>
 
-#include "../common/components.h"
-#include "../common/globals.h"
-#include "../common/utils.h"
-#include "../systems/movement.h"
-#include "../systems/render.h"
+#include "../common/components.hpp"
+#include "../common/globals.hpp"
+#include "../common/utils.hpp"
+#include "../systems/movement.hpp"
+#include "../systems/render.hpp"
 
 ////////////////////////////////////////
 ///// GAME MANAGER IMPLEMENTATION //////

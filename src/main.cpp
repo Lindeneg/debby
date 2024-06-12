@@ -7,7 +7,7 @@
 
 #include <cstdlib>
 
-#include "./managers/game_manager.h"
+#include "./managers/game_manager.hpp"
 
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::trace);

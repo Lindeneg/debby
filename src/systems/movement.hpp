@@ -1,8 +1,8 @@
 #ifndef DEBBY_SYSTEMS_MOVEMENT_H_
 #define DEBBY_SYSTEMS_MOVEMENT_H_
 
-#include "../common/components.h"
-#include "../ecs/ecs.h"
+#include "../common/components.hpp"
+#include "../ecs/ecs.hpp"
 
 namespace debby::systems {
 
