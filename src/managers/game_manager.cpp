@@ -26,8 +26,9 @@ static std::unique_ptr<debby::ecs::Registry> registry{
     std::make_unique<debby::ecs::Registry>()};
 
 static void cap_frame_rate() {
-    int time_to_wait = static_cast<int>(debby::constants::FRAME_TARGET -
-                                        (SDL_GetTicks() - previous_frame_time));
+    int time_to_wait = static_cast<int>(
+        debby::constants::FRAME_TARGET -
+        (static_cast<float>(SDL_GetTicks()) - previous_frame_time));
     // only delay if too fast
     if (time_to_wait > 0 && time_to_wait < debby::constants::FRAME_TARGET) {
         SDL_Delay(time_to_wait);
@@ -40,7 +41,7 @@ static void calculate_delta_time() {
     }
     // calculate delta time
     delta_time =
-        static_cast<float>(SDL_GetTicks() - previous_frame_time) / 1000.f;
+        (static_cast<float>(SDL_GetTicks()) - previous_frame_time) / 1000.f;
     // clamp value (if running in debugger dt will be messed up)
     delta_time =
         (debby::utils::greater(delta_time, debby::constants::MAXIMUM_DT))
@@ -67,15 +68,17 @@ void debby::managers::game::setup() {
 
     ecs::Entity zhinja{registry->create_entity()};
 
-    zhinja.add_component<TransformComponent>(glm::vec2(10.f, 30.f));
+    zhinja.add_component<TransformComponent>(glm::vec2(10.f, 30.f),
+                                             glm::vec2(3.f, 3.f));
     zhinja.add_component<RigidBodyComponent>(glm::vec2(10.f, 15.f));
-    zhinja.add_component<SpriteComponent>("zhinja", 10, 10);
+    zhinja.add_component<SpriteComponent>("zhinja", 16, 16);
 
     ecs::Entity grum{registry->create_entity()};
 
-    grum.add_component<TransformComponent>(glm::vec2(40.f, 50.f));
+    grum.add_component<TransformComponent>(glm::vec2(40.f, 50.f),
+                                           glm::vec2(3.f, 3.f));
     grum.add_component<RigidBodyComponent>(glm::vec2(50.f, 15.f));
-    grum.add_component<SpriteComponent>("grum", 10, 10);
+    grum.add_component<SpriteComponent>("grum", 16, 16);
 }
 
 void debby::managers::game::run() {

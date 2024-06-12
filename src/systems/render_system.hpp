@@ -6,6 +6,7 @@
 #include "../components/sprite_component.hpp"
 #include "../components/transform_component.hpp"
 #include "../ecs/ecs.hpp"
+#include "../managers/asset_manager.hpp"
 #include "../managers/screen_manager.hpp"
 
 namespace debby {
@@ -25,12 +26,15 @@ class RenderSystem : public ecs::System {
             const auto &transform{entity.get_component<TransformComponent>()};
             const auto &sprite{entity.get_component<SpriteComponent>()};
 
-            SDL_Rect rect{static_cast<int>(transform.position.x),
-                          static_cast<int>(transform.position.y), sprite.width,
-                          sprite.height};
+            SDL_Rect dst_rect{
+                static_cast<int>(transform.position.x),
+                static_cast<int>(transform.position.y),
+                static_cast<int>(sprite.width * transform.scale.x),
+                static_cast<int>(sprite.height * transform.scale.y)};
 
-            SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
-            SDL_RenderFillRect(_renderer, &rect);
+            SDL_RenderCopy(_renderer,
+                           managers::asset::get_texture(sprite.asset_id),
+                           &sprite.src_rect, &dst_rect);
         }
     }
 };
