@@ -3,6 +3,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <atomic>
 #include <bitset>
 #include <memory>
 #include <set>
@@ -12,6 +13,12 @@
 #include <vector>
 
 namespace debby::ecs {
+// universel ID type
+using Id = unsigned int;
+
+// thread-safe ID counter
+using IdCounter = std::atomic<Id>;
+
 // max number of components an entity can have
 constexpr unsigned int MAX_COMPONENTS{32};
 
@@ -24,20 +31,17 @@ typedef std::bitset<MAX_COMPONENTS> ComponentSignature;
 
 class IComponent {
    protected:
-    static int _next_id;
+    static IdCounter _next_id;
 };
 
 /*
  * Component */
 template <typename T>
 class Component : public IComponent {
-    friend class System;
-    friend class Registry;
-
-   private:
-    inline static int _get_id() {
-        static int id{_next_id++};
-        return id;
+   public:
+    inline static Id get_id() {
+        static IdCounter id{_next_id++};
+        return id.load();
     }
 };
 
@@ -50,15 +54,15 @@ class Component : public IComponent {
  * and an registry to register components and process behavior */
 class Entity {
    private:
-    int _id;
+    Id _id;
 
    public:
     class Registry *registry;
 
-    Entity(int id);
+    Entity(Id id);
     ~Entity() = default;
 
-    int get_id() const;
+    Id get_id() const;
 
     bool operator==(const Entity &other) const;
     bool operator!=(const Entity &other) const;
@@ -106,7 +110,7 @@ class System {
     // in order to be considered by the system
     template <typename TComponent>
     inline void require_component() {
-        const auto component_id{Component<TComponent>::_get_id()};
+        const Id component_id{Component<TComponent>::get_id()};
         _signature.set(component_id);
     }
 };
@@ -134,17 +138,21 @@ class Pool : public IPool {
 
     inline bool is_empty() const { return _data.empty(); }
 
-    inline int get_size() const { return static_cast<int>(_data.size()); }
+    inline unsigned int get_size() const {
+        return static_cast<int>(_data.size());
+    }
 
-    inline void resize(int new_size) { _data.resize(new_size); }
+    inline void set_size(unsigned int new_size) { _data.resize(new_size); }
 
-    inline void clear() { _data.clear(); }
+    inline void flush() { _data.clear(); }
 
-    inline void add(T obj) { _data.push_back(obj); }
+    inline void append(T obj) { _data.push_back(obj); }
 
-    inline void set(unsigned int index, T object) { _data[index] = object; }
+    inline void set_item(unsigned int index, T object) {
+        _data[index] = object;
+    }
 
-    inline T &get(unsigned int index) { return _data[index]; }
+    inline T &get_item(unsigned int index) { return _data[index]; }
 
     inline T &operator[](unsigned int index) { return _data[index]; }
 };
@@ -159,7 +167,7 @@ class Pool : public IPool {
  * */
 class Registry {
    private:
-    int _num_entities;
+    IdCounter _entity_counter;
 
     // each pool contains all data for
     // a certain component type.
@@ -196,8 +204,9 @@ class Registry {
 
     template <typename TComponent, typename... TComponentArgs>
     inline void add_component(Entity entity, TComponentArgs &&...args) {
-        const int component_id{Component<TComponent>::_get_id()};
-        if (component_id >= static_cast<int>(_component_pools.size())) {
+        const Id component_id{Component<TComponent>::get_id()};
+        if (component_id >=
+            static_cast<unsigned int>(_component_pools.size())) {
             // resize by one, since the resizing should be rare
             // so using the default vector resize could be expensive
             _component_pools.resize(component_id + 1, nullptr);
@@ -209,40 +218,44 @@ class Registry {
         std::shared_ptr<Pool<TComponent>> component_pool{
             std::static_pointer_cast<Pool<TComponent>>(
                 _component_pools[component_id])};
-        const int entity_id{entity.get_id()};
+        const Id entity_id{entity.get_id()};
         if (entity_id >= component_pool->get_size()) {
-            component_pool->resize(_num_entities);
+            component_pool->set_size(_entity_counter.load());
         }
-        spdlog::debug("adding component {0:d} to entity {1:d}", component_id,
-                      entity_id);
+
+        spdlog::debug("adding {0} (Id: {1:d}) to entity (Id: {2:d})",
+                      typeid(TComponent).name(), component_id, entity_id);
+
         TComponent new_component(std::forward<TComponentArgs>(args)...);
-        component_pool->set(entity_id, new_component);
+        component_pool->set_item(entity_id, new_component);
         _entity_component_signatures[entity_id].set(component_id);
     }
 
     template <typename TComponent>
     inline void remove_component(Entity entity) {
-        const int component_id{Component<TComponent>::_get_id()};
-        const int entity_id{entity.get_id()};
-        spdlog::debug("removing component {0:d} from entity {1:d}",
-                      component_id, entity_id);
+        const Id component_id{Component<TComponent>::get_id()};
+        const Id entity_id{entity.get_id()};
+
+        spdlog::debug("removing {0} (Id: {1:d}) from entity (Id: {2:d})",
+                      typeid(TComponent).name(), component_id, entity_id);
+
         _entity_component_signatures[entity_id].set(component_id, false);
     }
 
     template <typename TComponent>
     inline bool has_component(Entity entity) const {
-        const int component_id{Component<TComponent>::_get_id()};
-        const int entity_id{entity.get_id()};
+        const Id component_id{Component<TComponent>::get_id()};
+        const Id entity_id{entity.get_id()};
         return _entity_component_signatures[entity_id].test(component_id);
     }
 
     template <typename TComponent>
     inline TComponent &get_component(Entity entity) const {
-        const int component_id{Component<TComponent>::_get_id()};
-        const int entity_id{entity.get_id()};
+        const Id component_id{Component<TComponent>::get_id()};
+        const Id entity_id{entity.get_id()};
         auto pool{std::static_pointer_cast<Pool<TComponent>>(
             _component_pools[component_id])};
-        return pool->get(entity_id);
+        return pool->get_item(entity_id);
     }
 
     ////////////////////////////////////////
@@ -263,9 +276,13 @@ class Registry {
     template <typename TSystem>
     inline void remove_system() {
         const auto system{_systems.find(std::type_index(typeid(TSystem)))};
-        if (system != _systems.end()) {
-            _systems.erase(system);
+        if (system == _systems.end()) {
+            spdlog::warn("tried to remove non-existent {0} from registry",
+                         typeid(TSystem).name());
+            return;
         }
+        spdlog::debug("removing {0} from registry", system->first.name());
+        _systems.erase(system);
     }
 
     template <typename TSystem>

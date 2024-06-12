@@ -8,15 +8,15 @@
 /////// COMPONENT IMPLEMENTATION ///////
 ////////////////////////////////////////
 
-int debby::ecs::IComponent::_next_id{0};
+debby::ecs::IdCounter debby::ecs::IComponent::_next_id{};
 
 ////////////////////////////////////////
 //////// ENTITY IMPLEMENTATION /////////
 ////////////////////////////////////////
 
-debby::ecs::Entity::Entity(const int id) : _id(id) {}
+debby::ecs::Entity::Entity(Id id) : _id(id) {}
 
-int debby::ecs::Entity::get_id() const { return _id; }
+debby::ecs::Id debby::ecs::Entity::get_id() const { return _id; }
 
 bool debby::ecs::Entity::operator==(const Entity& other) const {
     return _id == other._id;
@@ -53,11 +53,16 @@ void debby::ecs::System::add_entity(Entity entity) {
 }
 
 void debby::ecs::System::remove_entity(Entity entity) {
-    spdlog::debug("removing entity {0:d} from registry", entity.get_id());
-    _entities.erase(
-        std::remove_if(_entities.begin(), _entities.end(),
-                       [&](Entity other) { return entity == other; }),
-        _entities.end());
+    auto iter{std::remove_if(_entities.begin(), _entities.end(),
+                             [&](Entity other) { return entity == other; })};
+    if (iter == _entities.end()) {
+        spdlog::warn(
+            "tried to remove non-existent entity (Id: {0:d}) from registry",
+            entity.get_id());
+        return;
+    }
+    spdlog::debug("removing entity (Id: {0:d}) from registry", entity.get_id());
+    _entities.erase(iter, _entities.end());
 }
 
 ////////////////////////////////////////
@@ -65,7 +70,7 @@ void debby::ecs::System::remove_entity(Entity entity) {
 ////////////////////////////////////////
 
 debby::ecs::Registry::Registry()
-    : _num_entities(0),
+    : _entity_counter({}),
       _component_pools({}),
       _entity_component_signatures({}),
       _systems({}),
@@ -73,9 +78,11 @@ debby::ecs::Registry::Registry()
       _entities_remove_queue({}) {}
 
 debby::ecs::Entity debby::ecs::Registry::create_entity() {
-    int entity_id{_num_entities++};
-    spdlog::debug("adding entity {0:d} to registry", entity_id);
-    if (entity_id >= static_cast<int>(_entity_component_signatures.size())) {
+    IdCounter new_id{_entity_counter++};
+    Id entity_id{new_id.load()};
+    spdlog::debug("adding entity (Id: {0:d}) to registry", entity_id);
+    if (entity_id >=
+        static_cast<unsigned int>(_entity_component_signatures.size())) {
         // resize by one, since the resizing should be rare
         // so using the default vector resize could be expensive
         _entity_component_signatures.resize(entity_id + 1);
@@ -87,7 +94,7 @@ debby::ecs::Entity debby::ecs::Registry::create_entity() {
 }
 
 void debby::ecs::Registry::add_entity_to_systems(Entity entity) {
-    const int entity_id{entity.get_id()};
+    const Id entity_id{entity.get_id()};
     const ComponentSignature& entity_component_signature{
         _entity_component_signatures[entity_id]};
     for (auto& system : _systems) {
@@ -96,7 +103,7 @@ void debby::ecs::Registry::add_entity_to_systems(Entity entity) {
             (entity_component_signature & system_component_signature) ==
             system_component_signature};
         if (is_interested) {
-            spdlog::debug("adding entity {0:d} to system {1}", entity_id,
+            spdlog::debug("adding entity (Id: {0:d}) to {1}", entity_id,
                           system.first.name());
             system.second->add_entity(entity);
         }

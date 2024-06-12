@@ -95,7 +95,7 @@ bool debby::manager::Game::initialize() {
             spdlog::error("failed to create SDL window {0}", SDL_GetError());
             return false;
         }
-        spdlog::debug("initialized SDL window ({0:d},{1:d})", _window_width,
+        spdlog::trace("initialized SDL window ({0:d},{1:d})", _window_width,
                       _window_height);
     }
     if (!_renderer) {
@@ -106,9 +106,9 @@ bool debby::manager::Game::initialize() {
             _window = nullptr;
             return false;
         }
-        spdlog::debug("initialized SDL renderer");
+        spdlog::trace("initialized SDL renderer");
     }
-    SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN);
+    //    SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN);
     _is_running = true;
     return true;
 }
@@ -182,12 +182,12 @@ void debby::manager::Game::destroy() {
     if (_renderer) {
         SDL_DestroyRenderer(_renderer);
         _renderer = nullptr;
-        spdlog::debug("destroyed SDL renderer");
+        spdlog::trace("destroyed SDL renderer");
     }
     if (_window) {
         SDL_DestroyWindow(_window);
         _window = nullptr;
-        spdlog::debug("destroyed SDL window");
+        spdlog::trace("destroyed SDL window");
     }
     IMG_Quit();
     SDL_QuitSubSystem(_sdl_subsystem_flags);

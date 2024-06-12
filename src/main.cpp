@@ -5,7 +5,7 @@
 #include "./managers/game.h"
 
 int main(int argc, char *argv[]) {
-    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::trace);
     debby::manager::Game game_manager{};
     if (!game_manager.initialize()) {
         return EXIT_FAILURE;
