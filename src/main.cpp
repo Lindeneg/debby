@@ -1,3 +1,8 @@
+#if defined(_WIN32) || defined(WIN32)
+#define SDL_MAIN_HANDLED
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <spdlog/spdlog.h>
 
 #include <cstdlib>
