@@ -1,28 +1,15 @@
-#ifndef DEBBY_MANAGERS_ASSET_MANAGER_H_
-#define DEBBY_MANAGERS_ASSET_MANAGER_H_
+#pragma once
 
 #include <SDL2/SDL_render.h>
 
-#include <map>
 #include <string>
 
-namespace debby::manager {
+namespace debby::managers::asset {
 
-class AssetManager {
-   private:
-    std::map<std::string, SDL_Texture*> _textures;
+void add_texture(const std::string& texture_id, const std::string& file_path);
 
-   public:
-    AssetManager();
-    ~AssetManager();
+SDL_Texture* get_texture(const std::string& texture_id);
 
-    void add_texture(const std::string& texture_id,
-                     const std::string& file_path);
+void clear_assets();
+}  // namespace debby::managers::asset
 
-    SDL_Texture* get_texture(const std::string& texture_id) const;
-
-    void clear_assets();
-};
-}  // namespace debby::manager
-
-#endif  // DEBBY_MANAGERS_ASSET_MANAGER_H_

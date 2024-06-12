@@ -11,11 +11,10 @@
 
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::trace);
-    debby::manager::GameManager game_manager{};
-    if (!game_manager.initialize()) {
+    if (!debby::managers::game::initialize()) {
         return EXIT_FAILURE;
     }
-    game_manager.run();
-    game_manager.destroy();
+    debby::managers::game::run();
+    debby::managers::game::destroy();
     return EXIT_SUCCESS;
 }
