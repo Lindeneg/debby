@@ -1,5 +1,4 @@
-#ifndef DEBBY_ECS_ECS_H_
-#define DEBBY_ECS_ECS_H_
+#pragma once
 
 #include <spdlog/spdlog.h>
 
@@ -329,4 +328,3 @@ TComponent &Entity::get_component() const {
 
 }  // namespace debby::ecs
 
-#endif  // DEBBY_ECS_ECS_H_

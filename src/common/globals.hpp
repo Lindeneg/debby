@@ -1,5 +1,4 @@
-#ifndef DEBBY_COMMON_GLOBALS_H_
-#define DEBBY_COMMON_GLOBALS_H_
+#pragma once
 
 #include <SDL2/SDL_pixels.h>
 
@@ -56,4 +55,3 @@ constexpr Color dark_green{0, 100, 0, 255};
 constexpr Color dark_blue{0, 0, 139, 255};
 }  // namespace debby::color
 
-#endif  // DEBBY_COMMON_GLOBALS_H_
