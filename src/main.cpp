@@ -1,4 +1,4 @@
-#if defined(_WIN32) || defined(WIN32)
+#if defined(_MSC_VER)
 #define SDL_MAIN_HANDLED
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -18,3 +18,4 @@ int main(int argc, char *argv[]) {
     debby::managers::game::destroy();
     return EXIT_SUCCESS;
 }
+
