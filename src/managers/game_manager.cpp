@@ -28,6 +28,7 @@ debby::manager::GameManager::GameManager()
       _display_mode({}),
       _event({}),
       _registry(std::make_unique<ecs::Registry>()),
+      _asset_manager(std::make_unique<AssetManager>()),
       _delta_time(0),
       _previous_frame_time(0),
       _window_width(0),
@@ -117,17 +118,22 @@ void debby::manager::GameManager::setup() {
     _registry->add_system<systems::Movement>();
     _registry->add_system<systems::Render>();
 
+    _asset_manager->add_texture("zhinja",
+                                "./assets/Characters/Champions/Zhinja.png");
+    _asset_manager->add_texture("grum",
+                                "./assets/Characters/Champions/Grum.png");
+
     ecs::Entity zhinja{_registry->create_entity()};
 
     zhinja.add_component<components::Transform>(glm::vec2(10.f, 30.f));
     zhinja.add_component<components::RigidBody>(glm::vec2(10.f, 15.f));
-    zhinja.add_component<components::Sprite>(10, 10);
+    zhinja.add_component<components::Sprite>("zhinja", 10, 10);
 
-    ecs::Entity zhinja2{_registry->create_entity()};
+    ecs::Entity grum{_registry->create_entity()};
 
-    zhinja2.add_component<components::Transform>(glm::vec2(40.f, 50.f));
-    zhinja2.add_component<components::RigidBody>(glm::vec2(50.f, 15.f));
-    zhinja2.add_component<components::Sprite>(10, 10);
+    grum.add_component<components::Transform>(glm::vec2(40.f, 50.f));
+    grum.add_component<components::RigidBody>(glm::vec2(50.f, 15.f));
+    grum.add_component<components::Sprite>("grum", 10, 10);
 }
 
 void debby::manager::GameManager::run() {

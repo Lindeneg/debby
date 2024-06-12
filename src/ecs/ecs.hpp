@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace debby::ecs {
-// universel ID type
+// universal ID type
 using Id = unsigned int;
 
 // thread-safe ID counter

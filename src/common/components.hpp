@@ -2,6 +2,7 @@
 #define DEBBY_COMMON_COMPONENTS_H_
 
 #include <glm/ext/vector_float2.hpp>
+#include <string>
 
 namespace debby::components {
 
@@ -50,10 +51,12 @@ class RigidBody {
  * Sprite */
 class Sprite {
    public:
+    std::string asset_id;
     int width;
     int height;
 
-    Sprite(int width = 0, int height = 0) {
+    Sprite(std::string asset_id = "", int width = 0, int height = 0) {
+        this->asset_id = asset_id;
         this->width = width;
         this->height = height;
     }

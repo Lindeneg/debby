@@ -20,6 +20,8 @@ class AssetManager {
                      const std::string& file_path);
 
     SDL_Texture* get_texture(const std::string& texture_id) const;
+
+    void clear_assets();
 };
 }  // namespace debby::manager
 

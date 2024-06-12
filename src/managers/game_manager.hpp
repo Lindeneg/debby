@@ -8,6 +8,7 @@
 
 #include "../common/globals.hpp"
 #include "../ecs/ecs.hpp"
+#include "./asset_manager.hpp"
 
 namespace debby::manager {
 
@@ -34,6 +35,7 @@ class GameManager {
     SDL_Event _event;
 
     std::unique_ptr<ecs::Registry> _registry;
+    std::unique_ptr<AssetManager> _asset_manager;
 
     float _delta_time;
     int _previous_frame_time;
