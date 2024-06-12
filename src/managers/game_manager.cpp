@@ -113,17 +113,11 @@ void debby::managers::game::render() {
 
     registry->get_system<RenderSystem>().update();
 
-    //    auto texture{
-    //        IMG_LoadTexture(_renderer,
-    //        "./assets/Characters/Champions/Zhinja.png")};
-    //
-    //    SDL_Rect src_rect{0, 0, 16, 16};
-    //    SDL_Rect dst_rect{static_cast<int>(player_pos.x),
-    //                      static_cast<int>(player_pos.y), 32, 32};
-    //    SDL_RenderCopy(_renderer, texture, &src_rect, &dst_rect);
-
     screen::present();
 }
 
-void debby::managers::game::destroy() { screen::destroy(); }
+void debby::managers::game::destroy() {
+    asset::destroy();
+    screen::destroy();
+}
 
