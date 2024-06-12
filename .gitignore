@@ -1,6 +1,6 @@
 .cache
 build
 compile_commands.json
+compile_flags.txt
 debugger.rdbg
 obj
-
