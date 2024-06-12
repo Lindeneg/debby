@@ -60,7 +60,7 @@ void debby::ecs::System::remove_entity(Entity entity) {
                      entity.get_id());
         return;
     }
-    spdlog::debug("removing entity {0:d} from registry", entity.get_id());
+    spdlog::trace("removing entity {0:d} from registry", entity.get_id());
     _entities.erase(iter, _entities.end());
 }
 
@@ -79,7 +79,7 @@ debby::ecs::Registry::Registry()
 debby::ecs::Entity debby::ecs::Registry::create_entity() {
     IdCounter new_id{_entity_counter++};
     Id entity_id{new_id.load()};
-    spdlog::debug("adding entity {0:d} to registry", entity_id);
+    spdlog::trace("adding entity {0:d} to registry", entity_id);
     if (entity_id >=
         static_cast<unsigned int>(_entity_component_signatures.size())) {
         // resize by one, since the resizing should be rare
@@ -102,7 +102,7 @@ void debby::ecs::Registry::add_entity_to_systems(Entity entity) {
             (entity_component_signature & system_component_signature) ==
             system_component_signature};
         if (is_interested) {
-            spdlog::debug("adding entity {0:d} to {1}", entity_id,
+            spdlog::trace("adding entity {0:d} to {1}", entity_id,
                           system.first.name());
             system.second->add_entity(entity);
         }

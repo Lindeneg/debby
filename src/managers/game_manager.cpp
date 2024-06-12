@@ -4,6 +4,8 @@
 #include <SDL2/SDL_timer.h>
 #include <spdlog/spdlog.h>
 
+#include <cstdlib>
+#include <fstream>
 #include <memory>
 
 #include "../common/utils.hpp"
@@ -67,21 +69,52 @@ void debby::managers::game::setup() {
 
 void debby::managers::game::load_level(int level) {
     asset::add_texture("zhinja", "./assets/sprites/zhinja.png");
-    asset::add_texture("grum", "./assets/sprites/grum.png");
+    //    asset::add_texture("grum", "./assets/sprites/grum.png");
+
+    //    if (asset::add_texture("tilemap", "./assets/tilemaps/jungle.png")) {
+    //        int tile_size{32};
+    //        int tile_scale{2};
+    //        int map_cols{25};
+    //        int map_rows{20};
+    //
+    //        std::fstream map_file;
+    //        map_file.open("./assets/tilemaps/jungle.map");
+    //
+    //        for (int y = 0; y < map_rows; y++) {
+    //            for (int x = 0; x < map_cols; x++) {
+    //                char ch;
+    //                map_file.get(ch);
+    //                int src_y{std::atoi(&ch) * tile_size};
+    //                map_file.get(ch);
+    //                int src_x{std::atoi(&ch) * tile_size};
+    //                map_file.ignore();
+    //
+    //                ecs::Entity tile{registry->create_entity()};
+    //                tile.add_component<TransformComponent>(
+    //                    glm::vec2(x * (tile_size * tile_scale),
+    //                              y * (tile_size * tile_scale)),
+    //                    glm::vec2(tile_scale, tile_scale));
+    //                tile.add_component<SpriteComponent>("tilemap", tile_size,
+    //                                                    tile_size, 0, src_x,
+    //                                                    src_y);
+    //            }
+    //        }
+    //    }
 
     ecs::Entity zhinja{registry->create_entity()};
 
-    zhinja.add_component<TransformComponent>(glm::vec2(10.f, 30.f),
+    zhinja.add_component<TransformComponent>(glm::vec2(40.f, 50.f),
                                              glm::vec2(3.f, 3.f));
     zhinja.add_component<RigidBodyComponent>(glm::vec2(10.f, 15.f));
-    zhinja.add_component<SpriteComponent>("zhinja", 16, 16);
+    zhinja.add_component<SpriteComponent>("zhinja", 16, 16, 2);
+    zhinja.add_component<AnimationComponent>();
 
-    ecs::Entity grum{registry->create_entity()};
-
-    grum.add_component<TransformComponent>(glm::vec2(40.f, 50.f),
-                                           glm::vec2(3.f, 3.f));
-    grum.add_component<RigidBodyComponent>(glm::vec2(50.f, 15.f));
-    grum.add_component<SpriteComponent>("grum", 16, 16);
+    //    ecs::Entity grum{registry->create_entity()};
+    //
+    //    grum.add_component<TransformComponent>(glm::vec2(40.f, 50.f),
+    //                                           glm::vec2(3.f, 3.f));
+    //    grum.add_component<RigidBodyComponent>(glm::vec2(50.f, 15.f));
+    //    grum.add_component<SpriteComponent>("grum", 16, 16, 2);
 }
 
 void debby::managers::game::run() {

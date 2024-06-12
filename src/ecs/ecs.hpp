@@ -222,7 +222,7 @@ class Registry {
             component_pool->set_size(_entity_counter.load());
         }
 
-        spdlog::debug("adding {0} to entity {1:d}", typeid(TComponent).name(),
+        spdlog::trace("adding {0} to entity {1:d}", typeid(TComponent).name(),
                       entity_id);
 
         TComponent new_component(std::forward<TComponentArgs>(args)...);
@@ -235,7 +235,7 @@ class Registry {
         const Id component_id{Component<TComponent>::get_id()};
         const Id entity_id{entity.get_id()};
 
-        spdlog::debug("removing {0} from entity {1:d}",
+        spdlog::trace("removing {0} from entity {1:d}",
                       typeid(TComponent).name(), entity_id);
 
         _entity_component_signatures[entity_id].set(component_id, false);
