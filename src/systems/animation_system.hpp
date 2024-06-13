@@ -20,10 +20,17 @@ class AnimationSystem : public ecs::System {
             auto &sprite{entity.get_component<SpriteComponent>()};
 
             if (anim.is_started()) {
-                active_anim.current_frame =
-                    ((SDL_GetTicks() - active_anim.start_time) *
-                     active_anim.frame_rate / 1000) %
-                    active_anim.num_frames;
+                auto new_frame{
+                    static_cast<int>((SDL_GetTicks() - active_anim.start_time) *
+                                     active_anim.frame_rate / 1000)};
+                if (new_frame > active_anim.num_frames && !active_anim.loop) {
+                    active_anim.current_frame = 0;
+                    anim.stop();
+                } else {
+                    active_anim.current_frame =
+                        new_frame % active_anim.num_frames;
+                }
+
             } else {
                 active_anim.current_frame = 0;
             }

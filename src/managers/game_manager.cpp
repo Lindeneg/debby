@@ -118,7 +118,7 @@ void debby::managers::game::load_level(int level) {
     anim.add_animation("left", {5, 4, 5, false});
     anim.add_animation("attack-down", {5, 5, 5, false});
     anim.add_animation("attack-up", {5, 6, 5, false});
-    anim.add_animation("attack-right", {5, 7, 5, false});
+    anim.add_animation("attack-right", {5, 7, 5, true});
     anim.add_animation("attack-left", {5, 8, 5, false});
 
     anim.set_active_animation("attack-right");
