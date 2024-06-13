@@ -10,7 +10,7 @@
 #include "./managers/game_manager.hpp"
 
 int main(int argc, char *argv[]) {
-    spdlog::set_level(spdlog::level::trace);
+    spdlog::set_level(spdlog::level::debug);
     if (!debby::managers::game::initialize()) {
         return EXIT_FAILURE;
     }

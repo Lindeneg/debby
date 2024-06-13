@@ -69,7 +69,7 @@ class Entity {
     bool operator>(const Entity &other) const;
 
     template <typename TComponent, typename... TComponentArgs>
-    void add_component(TComponentArgs &&...args);
+    TComponent &add_component(TComponentArgs &&...args);
 
     template <typename TComponent>
     void remove_component();
@@ -202,7 +202,7 @@ class Registry {
     ////////////////////////////////////////
 
     template <typename TComponent, typename... TComponentArgs>
-    inline void add_component(Entity entity, TComponentArgs &&...args) {
+    inline TComponent &add_component(Entity entity, TComponentArgs &&...args) {
         const Id component_id{Component<TComponent>::get_id()};
         if (component_id >=
             static_cast<unsigned int>(_component_pools.size())) {
@@ -228,6 +228,7 @@ class Registry {
         TComponent new_component(std::forward<TComponentArgs>(args)...);
         component_pool->set_item(entity_id, new_component);
         _entity_component_signatures[entity_id].set(component_id);
+        return component_pool->get_item(entity_id);
     }
 
     template <typename TComponent>
@@ -302,10 +303,10 @@ class Registry {
 ////////////////////////////////////////
 
 template <typename TComponent, typename... TComponentArgs>
-void Entity::add_component(TComponentArgs &&...args) {
+TComponent &Entity::add_component(TComponentArgs &&...args) {
     assert(registry);
-    registry->add_component<TComponent>(*this,
-                                        std::forward<TComponentArgs>(args)...);
+    return registry->add_component<TComponent>(
+        *this, std::forward<TComponentArgs>(args)...);
 }
 
 template <typename TComponent>
