@@ -72,7 +72,7 @@ void debby::managers::game::setup() {
 
 void debby::managers::game::load_level(int level) {
     asset::add_texture("zhinja", "./assets/sprites/zhinja.png");
-    //    asset::add_texture("grum", "./assets/sprites/grum.png");
+    asset::add_texture("grum", "./assets/sprites/grum.png");
 
     if (asset::add_texture("tilemap", "./assets/tilemaps/jungle.png")) {
         int tile_size{32};
@@ -107,30 +107,39 @@ void debby::managers::game::load_level(int level) {
 
     zhinja.add_component<TransformComponent>(glm::vec2(40.f, 50.f),
                                              glm::vec2(2.f, 2.f));
-    zhinja.add_component<RigidBodyComponent>(glm::vec2(10.f, 15.f));
+    zhinja.add_component<RigidBodyComponent>(glm::vec2(10.f, 0.f));
     zhinja.add_component<SpriteComponent>("zhinja", 16, 16, 2);
 
     auto &anim{zhinja.add_component<AnimationComponent>()};
-
-    anim.add_animation("down", {5, 1, 5, false});
-    anim.add_animation("up", {5, 2, 5, false});
-    anim.add_animation("right", {5, 3, 5, false});
-    anim.add_animation("left", {5, 4, 5, false});
+    anim.add_animation("down", {5, 1, 5, true});
+    anim.add_animation("up", {5, 2, 5, true});
+    anim.add_animation("right", {5, 3, 5, true});
+    anim.add_animation("left", {5, 4, 5, true});
     anim.add_animation("attack-down", {5, 5, 5, false});
     anim.add_animation("attack-up", {5, 6, 5, false});
-    anim.add_animation("attack-right", {5, 7, 5, true});
+    anim.add_animation("attack-right", {5, 7, 5, false});
     anim.add_animation("attack-left", {5, 8, 5, false});
-
-    anim.set_active_animation("attack-right");
-
+    anim.set_active_animation("right");
     anim.start();
 
-    //    ecs::Entity grum{registry->create_entity()};
-    //
-    //    grum.add_component<TransformComponent>(glm::vec2(40.f, 50.f),
-    //                                           glm::vec2(3.f, 3.f));
-    //    grum.add_component<RigidBodyComponent>(glm::vec2(50.f, 15.f));
-    //    grum.add_component<SpriteComponent>("grum", 16, 16, 2);
+    ecs::Entity grum{registry->create_entity()};
+
+    grum.add_component<TransformComponent>(glm::vec2(100.f, 50.f),
+                                           glm::vec2(2.f, 2.f));
+    grum.add_component<RigidBodyComponent>(glm::vec2(-10.f, 0.f));
+    grum.add_component<SpriteComponent>("grum", 16, 16, 2);
+
+    auto &anim2{grum.add_component<AnimationComponent>()};
+    anim2.add_animation("down", {5, 0, 5, true});
+    anim2.add_animation("up", {5, 1, 5, true});
+    anim2.add_animation("right", {5, 2, 5, true});
+    anim2.add_animation("left", {5, 3, 5, true});
+    anim2.add_animation("attack-down", {3, 5, 5, false});
+    anim2.add_animation("attack-up", {3, 6, 5, false});
+    anim2.add_animation("attack-right", {3, 7, 5, false});
+    anim2.add_animation("attack-left", {3, 8, 5, false});
+    anim2.set_active_animation("left");
+    anim2.start();
 }
 
 void debby::managers::game::run() {
