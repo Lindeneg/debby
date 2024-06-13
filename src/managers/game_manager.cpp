@@ -123,6 +123,8 @@ void debby::managers::game::load_level(int level) {
 
     anim.set_active_animation("attack-right");
 
+    anim.start();
+
     //    ecs::Entity grum{registry->create_entity()};
     //
     //    grum.add_component<TransformComponent>(glm::vec2(40.f, 50.f),

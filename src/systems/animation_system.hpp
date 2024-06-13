@@ -15,16 +15,21 @@ class AnimationSystem : public ecs::System {
 
     inline void update() {
         for (auto entity : get_entities()) {
-            auto &anim{entity.get_component<AnimationComponent>()
-                           .get_active_animation()};
+            auto &anim{entity.get_component<AnimationComponent>()};
+            auto &active_anim{anim.get_active_animation()};
             auto &sprite{entity.get_component<SpriteComponent>()};
 
-            anim.current_frame =
-                ((SDL_GetTicks() - anim.start_time) * anim.frame_rate / 1000) %
-                anim.num_frames;
+            if (anim.is_started()) {
+                active_anim.current_frame =
+                    ((SDL_GetTicks() - active_anim.start_time) *
+                     active_anim.frame_rate / 1000) %
+                    active_anim.num_frames;
+            } else {
+                active_anim.current_frame = 0;
+            }
 
-            sprite.src_rect.x = anim.current_frame * sprite.width;
-            sprite.src_rect.y = anim.start_y * sprite.width;
+            sprite.src_rect.x = active_anim.current_frame * sprite.width;
+            sprite.src_rect.y = active_anim.start_y * sprite.width;
         }
     }
 };
