@@ -8,11 +8,11 @@
 
 #include "./screen_manager.hpp"
 
-static std::map<std::string, SDL_Texture*> textures{};
+static std::map<std::string, SDL_Texture *> textures{};
 
-bool debby::managers::asset::add_texture(const std::string& texture_id,
-                                         const std::string& file_path) {
-    SDL_Texture* texture{
+bool debby::managers::asset::add_texture(const std::string &texture_id,
+                                         const std::string &file_path) {
+    SDL_Texture *texture{
         IMG_LoadTexture(screen::get_renderer(), file_path.c_str())};
     if (!texture) {
         spdlog::error("failed to load texture '{0}' with path '{1}'",
@@ -25,8 +25,8 @@ bool debby::managers::asset::add_texture(const std::string& texture_id,
     return true;
 }
 
-SDL_Texture* debby::managers::asset::get_texture(
-    const std::string& texture_id) {
+SDL_Texture *debby::managers::asset::get_texture(
+    const std::string &texture_id) {
     auto iter{textures.find(texture_id)};
     if (iter == textures.end()) {
         spdlog::warn("texture '{0}' does not exist", texture_id);
@@ -36,7 +36,7 @@ SDL_Texture* debby::managers::asset::get_texture(
 }
 
 void debby::managers::asset::destroy() {
-    for (auto texture : textures) {
+    for (const auto &texture : textures) {
         spdlog::debug("removing texture '{0}'", texture.first);
         SDL_DestroyTexture(texture.second);
     }

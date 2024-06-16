@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEBBY_COMPONENTS_ANIMATION_COMPONENT_HPP_
+#define DEBBY_COMPONENTS_ANIMATION_COMPONENT_HPP_
 
 #include <SDL2/SDL_timer.h>
 #include <spdlog/spdlog.h>
@@ -9,6 +10,8 @@
 
 namespace debby {
 
+/* AnimationContext contains information
+ * animations in a given sprite-sheet */
 struct AnimationContext {
     int num_frames;
     int start_y;
@@ -17,17 +20,22 @@ struct AnimationContext {
     bool loop;
     int start_time;
 
-    AnimationContext(int num_frames = 1, int start_y = 0, int frame_rate = 1,
-                     bool loop = true) {
+    explicit AnimationContext(int num_frames = 1, int start_y = 0,
+                              int frame_rate = 1, bool loop = true) {
         this->num_frames = num_frames;
         this->start_y = start_y;
         this->current_frame = 1;
         this->frame_rate = frame_rate;
         this->loop = loop;
-        this->start_time = SDL_GetTicks();
+        this->start_time = static_cast<int>(SDL_GetTicks());
     }
+
+    ~AnimationContext() = default;
 };
 
+/* AnimationComponent allows an entity the notion
+ * of animations. It stores a collection of
+ * AnimationContext's in a map with string keys */
 class AnimationComponent {
    private:
     std::map<std::string, AnimationContext> _animations;
@@ -38,11 +46,13 @@ class AnimationComponent {
    public:
     AnimationComponent()
         : _animations({}),
-          _active_animation(""),
+          _active_animation({}),
           _default_context({}),
           _is_started(false) {}
 
-    inline bool is_started() const { return _is_started; }
+    ~AnimationComponent() = default;
+
+    [[nodiscard]] inline bool is_started() const { return _is_started; }
 
     inline void start() { _is_started = true; }
 
@@ -71,3 +81,4 @@ class AnimationComponent {
 };
 }  // namespace debby
 
+#endif  // DEBBY_COMPONENTS_ANIMATION_COMPONENT_HPP_

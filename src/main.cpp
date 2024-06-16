@@ -1,15 +1,10 @@
-#if defined(_MSC_VER)
-#define SDL_MAIN_HANDLED
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <spdlog/spdlog.h>
 
 #include <cstdlib>
 
 #include "./managers/game_manager.hpp"
 
-int main(int argc, char *argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
     spdlog::set_level(spdlog::level::debug);
     if (!debby::managers::game::initialize()) {
         return EXIT_FAILURE;
@@ -18,4 +13,3 @@ int main(int argc, char *argv[]) {
     debby::managers::game::destroy();
     return EXIT_SUCCESS;
 }
-

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEBBY_MANAGERS_SCREEN_MANAGER_HPP_
+#define DEBBY_MANAGERS_SCREEN_MANAGER_HPP_
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
@@ -23,3 +24,4 @@ SDL_Renderer *get_renderer();
 void destroy();
 }  // namespace debby::managers::screen
 
+#endif  // DEBBY_MANAGERS_SCREEN_MANAGER_HPP_

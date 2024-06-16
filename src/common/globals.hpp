@@ -1,37 +1,46 @@
-#pragma once
+#ifndef DEBBY_COMMON_GLOBALS_HPP_
+#define DEBBY_COMMON_GLOBALS_HPP_
 
 #include <SDL2/SDL_pixels.h>
 
 namespace debby {
 
+/* contains game-specific information and configuration */
+struct GameContext {
+    float delta_time;
+    bool draw_collision_rects;
+};
+
+/* simple alias for SDL_Color */
 using Color = SDL_Color;
 }  // namespace debby
 
 namespace debby::constants {
-// target FPS for fixed updates
+/* target FPS for fixed updates */
 constexpr int FPS{60};
 
-// target time in ms for each frame
+/* target time in ms for each frame */
 constexpr int FRAME_TARGET{1000 / FPS};
 
-// maximum delta time (useful if running in debugger)
+/* maximum delta time (useful if running in debugger) */
 constexpr float MAXIMUM_DT{0.05f};
 
 /* used to produce epsilon relative
  * to value of some given operands */
 constexpr float REL_EPSILON{1e-8f};
 
-// absolute epsilon value
+/* absolute epsilon value */
 constexpr float ABS_EPSILON{1e-12f};
 
-// approximation of PI
+/* approximation of PI */
 constexpr double PI{3.14159265359};
 
-// twice the pi, double the fun!
+/* twice the pi, double the fun! */
 constexpr double PI2{PI * 2};
 
 }  // namespace debby::constants
 
+/* collection of sdl colors */
 namespace debby::color {
 constexpr Color white{255, 255, 255, 255};
 constexpr Color black{0, 0, 0, 255};
@@ -55,3 +64,4 @@ constexpr Color dark_green{0, 100, 0, 255};
 constexpr Color dark_blue{0, 0, 139, 255};
 }  // namespace debby::color
 
+#endif  // DEBBY_COMMON_GLOBALS_HPP_

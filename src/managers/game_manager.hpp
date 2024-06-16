@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEBBY_MANAGERS_GAME_MANAGER_HPP_
+#define DEBBY_MANAGERS_GAME_MANAGER_HPP_
 
 namespace debby::managers::game {
 
@@ -17,4 +18,6 @@ void render();
 void destroy();
 
 }  // namespace debby::managers::game
+
+#endif  // DEBBY_MANAGERS_GAME_MANAGER_HPP_
 

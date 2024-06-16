@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEBBY_SYSTEMS_ANIMATION_SYSTEM_HPP_
+#define DEBBY_SYSTEMS_ANIMATION_SYSTEM_HPP_
 
 #include "../components/animation_component.hpp"
 #include "../components/sprite_component.hpp"
@@ -6,6 +7,11 @@
 
 namespace debby {
 
+/* AnimationSystem handles Entity animations
+ *
+ * Entities must have the following components:
+ * - SpriteComponent
+ * - AnimationComponent */
 class AnimationSystem : public ecs::System {
    public:
     AnimationSystem() {
@@ -19,6 +25,7 @@ class AnimationSystem : public ecs::System {
             auto &active_anim{anim.get_active_animation()};
             auto &sprite{entity.get_component<SpriteComponent>()};
 
+            // TODO probably tidy this up a bit
             if (anim.is_started()) {
                 auto new_frame{
                     static_cast<int>((SDL_GetTicks() - active_anim.start_time) *
@@ -35,9 +42,11 @@ class AnimationSystem : public ecs::System {
                 active_anim.current_frame = 0;
             }
 
-            sprite.src_rect.x = active_anim.current_frame * sprite.width;
-            sprite.src_rect.y = active_anim.start_y * sprite.width;
+            sprite.src_x = active_anim.current_frame * sprite.width;
+            sprite.src_y = active_anim.start_y * sprite.width;
         }
     }
 };
 }  // namespace debby
+
+#endif  // DEBBY_SYSTEMS_ANIMATION_SYSTEM_HPP_

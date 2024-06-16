@@ -2,7 +2,6 @@
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
-#include <spdlog/spdlog.h>
 
 #include <cstdlib>
 #include <fstream>
@@ -10,21 +9,24 @@
 
 #include "../common/utils.hpp"
 #include "../components/animation_component.hpp"
+#include "../components/boxcollider_component.hpp"
 #include "../components/rigidbody_component.hpp"
 #include "../components/sprite_component.hpp"
 #include "../components/transform_component.hpp"
 #include "../ecs/ecs.hpp"
 #include "../systems/animation_system.hpp"
+#include "../systems/collision_system.hpp"
+#include "../systems/collisiondebug_system.hpp"
+#include "../systems/damage_system.hpp"
+#include "../systems/keyboardcontrol_system.hpp"
 #include "../systems/movement_system.hpp"
 #include "../systems/render_system.hpp"
-#include "./asset_manager.hpp"
-#include "./screen_manager.hpp"
 
 static bool is_running{false};
 static bool do_cap_frame_rate{false};
 static SDL_Event event{};
-static float delta_time{};
 static float previous_frame_time{};
+static debby::GameContext game_context{};
 
 static std::unique_ptr<debby::ecs::Registry> registry{
     std::make_unique<debby::ecs::Registry>()};
@@ -44,10 +46,10 @@ static void calculate_delta_time() {
         cap_frame_rate();
     }
     // calculate delta time
-    delta_time =
+    auto delta_time =
         (static_cast<float>(SDL_GetTicks()) - previous_frame_time) / 1000.f;
     // clamp value (if running in debugger dt will be messed up)
-    delta_time =
+    game_context.delta_time =
         (debby::utils::greater(delta_time, debby::constants::MAXIMUM_DT))
             ? debby::constants::MAXIMUM_DT
             : delta_time;
@@ -67,6 +69,11 @@ void debby::managers::game::setup() {
     registry->add_system<MovementSystem>();
     registry->add_system<RenderSystem>();
     registry->add_system<AnimationSystem>();
+    registry->add_system<CollisionSystem>();
+    registry->add_system<CollisionDebugSystem>();
+    registry->add_system<DamageSystem>();
+    registry->add_system<KeyboardControlSystem>();
+
     load_level(1);
 }
 
@@ -87,9 +94,9 @@ void debby::managers::game::load_level(int level) {
             for (int x = 0; x < map_cols; x++) {
                 char ch;
                 map_file.get(ch);
-                int src_y{std::atoi(&ch) * tile_size};
+                int src_y{std::strtol(&ch, nullptr, 10) * tile_size};
                 map_file.get(ch);
-                int src_x{std::atoi(&ch) * tile_size};
+                int src_x{std::strtol(&ch, nullptr, 10) * tile_size};
                 map_file.ignore();
 
                 ecs::Entity tile{registry->create_entity()};
@@ -109,16 +116,17 @@ void debby::managers::game::load_level(int level) {
                                              glm::vec2(2.f, 2.f));
     zhinja.add_component<RigidBodyComponent>(glm::vec2(10.f, 0.f));
     zhinja.add_component<SpriteComponent>("zhinja", 16, 16, 2);
+    zhinja.add_component<BoxColliderComponent>(16, 16);
 
     auto &anim{zhinja.add_component<AnimationComponent>()};
-    anim.add_animation("down", {5, 1, 5, true});
-    anim.add_animation("up", {5, 2, 5, true});
-    anim.add_animation("right", {5, 3, 5, true});
-    anim.add_animation("left", {5, 4, 5, true});
-    anim.add_animation("attack-down", {5, 5, 5, false});
-    anim.add_animation("attack-up", {5, 6, 5, false});
-    anim.add_animation("attack-right", {5, 7, 5, false});
-    anim.add_animation("attack-left", {5, 8, 5, false});
+    anim.add_animation("down", AnimationContext{5, 1, 5, true});
+    anim.add_animation("up", AnimationContext{5, 2, 5, true});
+    anim.add_animation("right", AnimationContext{5, 3, 5, true});
+    anim.add_animation("left", AnimationContext{5, 4, 5, true});
+    anim.add_animation("attack-down", AnimationContext{5, 5, 5, false});
+    anim.add_animation("attack-up", AnimationContext{5, 6, 5, false});
+    anim.add_animation("attack-right", AnimationContext{5, 7, 5, false});
+    anim.add_animation("attack-left", AnimationContext{5, 8, 5, false});
     anim.set_active_animation("right");
     anim.start();
 
@@ -128,16 +136,17 @@ void debby::managers::game::load_level(int level) {
                                            glm::vec2(2.f, 2.f));
     grum.add_component<RigidBodyComponent>(glm::vec2(-10.f, 0.f));
     grum.add_component<SpriteComponent>("grum", 16, 16, 2);
+    grum.add_component<BoxColliderComponent>(16, 16);
 
     auto &anim2{grum.add_component<AnimationComponent>()};
-    anim2.add_animation("down", {5, 0, 5, true});
-    anim2.add_animation("up", {5, 1, 5, true});
-    anim2.add_animation("right", {5, 2, 5, true});
-    anim2.add_animation("left", {5, 3, 5, true});
-    anim2.add_animation("attack-down", {3, 5, 5, false});
-    anim2.add_animation("attack-up", {3, 6, 5, false});
-    anim2.add_animation("attack-right", {3, 7, 5, false});
-    anim2.add_animation("attack-left", {3, 8, 5, false});
+    anim2.add_animation("down", AnimationContext{5, 0, 5, true});
+    anim2.add_animation("up", AnimationContext{5, 1, 5, true});
+    anim2.add_animation("right", AnimationContext{5, 2, 5, true});
+    anim2.add_animation("left", AnimationContext{5, 3, 5, true});
+    anim2.add_animation("attack-down", AnimationContext{3, 5, 5, false});
+    anim2.add_animation("attack-up", AnimationContext{3, 6, 5, false});
+    anim2.add_animation("attack-right", AnimationContext{3, 7, 5, false});
+    anim2.add_animation("attack-left", AnimationContext{3, 8, 5, false});
     anim2.set_active_animation("left");
     anim2.start();
 }
@@ -158,9 +167,14 @@ void debby::managers::game::process_input() {
                 is_running = false;
                 break;
             case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_d) {
+                    game_context.draw_collision_rects =
+                        !game_context.draw_collision_rects;
+                }
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
                     is_running = false;
                 }
+                EventManager::emit<KeyPressedEvent>(event.key.keysym.sym);
                 break;
         }
     }
@@ -168,8 +182,17 @@ void debby::managers::game::process_input() {
 
 void debby::managers::game::update() {
     calculate_delta_time();
-    registry->get_system<MovementSystem>().update(delta_time);
+
+    // TODO probably rethink this and make a "disconnect" method instead
+    EventManager::reset();
+
+    registry->get_system<DamageSystem>().subscribe_to_events();
+    registry->get_system<KeyboardControlSystem>().subscribe_to_events();
+
+    registry->get_system<MovementSystem>().update(game_context.delta_time);
     registry->get_system<AnimationSystem>().update();
+    registry->get_system<CollisionSystem>().update();
+
     registry->update();
 }
 
@@ -178,6 +201,10 @@ void debby::managers::game::render() {
 
     registry->get_system<RenderSystem>().update();
 
+    if (game_context.draw_collision_rects) {
+        registry->get_system<CollisionDebugSystem>().update();
+    }
+
     screen::present();
 }
 
@@ -185,4 +212,3 @@ void debby::managers::game::destroy() {
     asset::destroy();
     screen::destroy();
 }
-

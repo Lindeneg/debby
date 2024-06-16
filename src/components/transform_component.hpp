@@ -1,21 +1,24 @@
-#pragma once
+#ifndef DEBBY_COMPONENTS_TRANSFORM_COMPONENT_HPP_
+#define DEBBY_COMPONENTS_TRANSFORM_COMPONENT_HPP_
 
 #include <glm/ext/vector_float2.hpp>
 
 namespace debby {
+
+/* TransformComponent allows an entity a
+ * notion of a position in space */
 class TransformComponent {
    public:
     glm::vec2 position;
     glm::vec2 scale;
     double rotation;
 
-    TransformComponent(glm::vec2 position = glm::vec2(0, 0),
-                       glm::vec2 scale = glm::vec2(1, 1),
-                       double rotation = 0.0) {
-        this->position = position;
-        this->scale = scale;
-        this->rotation = rotation;
-    }
+    explicit TransformComponent(glm::vec2 position = {0, 0},
+                                glm::vec2 scale = {1, 1}, double rotation = 0.0)
+        : position(position), scale(scale), rotation(rotation) {}
+
     ~TransformComponent() = default;
 };
 }  // namespace debby
+
+#endif  // DEBBY_COMPONENTS_TRANSFORM_COMPONENT_HPP_

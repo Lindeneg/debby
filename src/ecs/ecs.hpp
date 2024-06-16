@@ -1,9 +1,11 @@
-#pragma once
+#ifndef DEBBY_ECS_ECS_HPP_
+#define DEBBY_ECS_ECS_HPP_
 
 #include <spdlog/spdlog.h>
 
 #include <atomic>
 #include <bitset>
+#include <deque>
 #include <memory>
 #include <set>
 #include <typeindex>
@@ -12,45 +14,42 @@
 #include <vector>
 
 namespace debby::ecs {
-// universal ID type
+/* Universal ID type */
 using Id = unsigned int;
 
-// thread-safe ID counter
+/* Thread-safe ID counter */
 using IdCounter = std::atomic<Id>;
 
-// max number of components an entity can have
+/* Max number of components an entity can have */
 constexpr unsigned int MAX_COMPONENTS{32};
 
-// describes which component(s) are enabled on an entity
+/* Describes which component(s) are enabled on an entity */
 typedef std::bitset<MAX_COMPONENTS> ComponentSignature;
 
-////////////////////////////////////////
-//////// COMPONENT DEFINITION //////////
-////////////////////////////////////////
-
+/*
+ * IComponent is a simple wrapper to hold an ID counter */
 class IComponent {
    protected:
     static IdCounter _next_id;
 };
 
 /*
- * Component */
-template <typename T>
+ * Component is an abstract class instantiated
+ * for once for each unique component subtype */
+template <typename>
 class Component : public IComponent {
    public:
     inline static Id get_id() {
+        /* Since a unique component class is made for each type
+         * static id variable will only be created once per instance */
         static IdCounter id{_next_id++};
         return id.load();
     }
 };
 
-////////////////////////////////////////
-///////// ENTITY DEFINITION ////////////
-////////////////////////////////////////
-
 /*
  * Entity is effectively just an identifier used by a system
- * and an registry to register components and process behavior */
+ * and registry to register components and process behavior */
 class Entity {
    private:
     Id _id;
@@ -58,10 +57,11 @@ class Entity {
    public:
     class Registry *registry;
 
-    Entity(Id id);
+    explicit Entity(Id id);
     ~Entity() = default;
 
-    Id get_id() const;
+    [[nodiscard]] Id get_id() const;
+    void kill();
 
     bool operator==(const Entity &other) const;
     bool operator!=(const Entity &other) const;
@@ -75,15 +75,11 @@ class Entity {
     void remove_component();
 
     template <typename TComponent>
-    bool has_component() const;
+    [[nodiscard]] bool has_component() const;
 
     template <typename TComponent>
     TComponent &get_component() const;
 };
-
-////////////////////////////////////////
-////////// SYSTEM DEFINITION ///////////
-////////////////////////////////////////
 
 /*
  * System processes entities that
@@ -97,16 +93,16 @@ class System {
     System() = default;
     ~System() = default;
 
-    const ComponentSignature &get_signature() const;
+    [[nodiscard]] const ComponentSignature &get_signature() const;
 
-    const std::vector<Entity> &get_entities() const;
+    [[nodiscard]] const std::vector<Entity> &get_entities() const;
 
     void add_entity(Entity entity);
 
     void remove_entity(Entity entity);
 
-    // defines the component that an entity must have
-    // in order to be considered by the system
+    /* Defines the component that an entity must have
+     * in order to be considered by the system */
     template <typename TComponent>
     inline void require_component() {
         const Id component_id{Component<TComponent>::get_id()};
@@ -114,13 +110,12 @@ class System {
     }
 };
 
-////////////////////////////////////////
-/////////// POOL DEFINITION ////////////
-////////////////////////////////////////
-
+/*
+ * IPool is just a simple interface that can be used
+ * when the T used in Pool is not known precisely */
 class IPool {
    public:
-    virtual ~IPool() {}
+    virtual ~IPool() = default;
 };
 
 /*
@@ -131,13 +126,13 @@ class Pool : public IPool {
     std::vector<T> _data;
 
    public:
-    Pool(unsigned int size = 100) { _data.resize(size); }
+    explicit Pool(unsigned int size = 100) { _data.resize(size); }
 
-    virtual ~Pool() = default;
+    ~Pool() override = default;
 
-    inline bool is_empty() const { return _data.empty(); }
+    [[nodiscard]] inline bool is_empty() const { return _data.empty(); }
 
-    inline unsigned int get_size() const {
+    [[nodiscard]] inline unsigned int get_size() const {
         return static_cast<int>(_data.size());
     }
 
@@ -156,10 +151,6 @@ class Pool : public IPool {
     inline T &operator[](unsigned int index) { return _data[index]; }
 };
 
-////////////////////////////////////////
-///////// REGISTRY DEFINITION //////////
-////////////////////////////////////////
-
 /*
  * Registry manages creation and destruction of entities,
  * adding systems and adding components to entities
@@ -168,22 +159,30 @@ class Registry {
    private:
     IdCounter _entity_counter;
 
-    // each pool contains all data for
-    // a certain component type.
-    // Vector index is component id and
-    // pool index is entity id
+    /* Each pool contains all data for a certain component type.
+     * Vector index is component id and pool index is entity id */
     std::vector<std::shared_ptr<IPool>> _component_pools;
 
-    // vector of component signatures per entity
-    // vector index is equal to entity id
+    /* Vector of component signatures per entity.
+     * Vector index is equal to entity id */
     std::vector<ComponentSignature> _entity_component_signatures;
 
     std::unordered_map<std::type_index, std::shared_ptr<System>> _systems;
 
-    // save entities to add/remove, such that they can
-    // be processed in bulk at the end of each frame
+    /* Save entities to add/remove, such that they can
+     * be processed in bulk at the end of each frame */
     std::set<Entity> _entities_add_queue;
     std::set<Entity> _entities_remove_queue;
+
+    /* Saves the Id of a destroyed entity such that
+     * it can be reused for other new entities */
+    std::deque<Id> _free_ids;
+
+    /* Add entity to systems where the component signature is set */
+    void _add_entity_to_systems(Entity entity);
+
+    /* Remove entity from systems */
+    void _remove_entity_from_systems(Entity entity);
 
    public:
     Registry();
@@ -191,23 +190,16 @@ class Registry {
 
     void update();
 
-    ////////////////////////////////////////
-    ////////////// ENTITIES ////////////////
-    ////////////////////////////////////////
-
     Entity create_entity();
-
-    ////////////////////////////////////////
-    ///////////// COMPONENTS ///////////////
-    ////////////////////////////////////////
+    void destroy_entity(Entity entity);
 
     template <typename TComponent, typename... TComponentArgs>
     inline TComponent &add_component(Entity entity, TComponentArgs &&...args) {
         const Id component_id{Component<TComponent>::get_id()};
         if (component_id >=
             static_cast<unsigned int>(_component_pools.size())) {
-            // resize by one, since the resizing should be rare
-            // so using the default vector resize could be expensive
+            /* Resize by one, since the resizing should be rare
+             * so using the default vector resize could be expensive */
             _component_pools.resize(component_id + 1, nullptr);
         }
         if (!_component_pools[component_id]) {
@@ -258,13 +250,6 @@ class Registry {
         return pool->get_item(entity_id);
     }
 
-    ////////////////////////////////////////
-    ////////////// SYSTEMS /////////////////
-    ////////////////////////////////////////
-
-    // add entity to systems where the component signature is set
-    void add_entity_to_systems(Entity entity);
-
     template <typename TSystem, typename... TSystemArgs>
     inline void add_system(TSystemArgs &&...args) {
         std::shared_ptr<TSystem> new_system(
@@ -298,10 +283,6 @@ class Registry {
     }
 };
 
-////////////////////////////////////////
-//////// ENTITY IMPLEMENTATION /////////
-////////////////////////////////////////
-
 template <typename TComponent, typename... TComponentArgs>
 TComponent &Entity::add_component(TComponentArgs &&...args) {
     assert(registry);
@@ -329,3 +310,4 @@ TComponent &Entity::get_component() const {
 
 }  // namespace debby::ecs
 
+#endif  // DEBBY_ECS_ECS_HPP_

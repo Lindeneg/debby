@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEBBY_COMMON_UTILS_HPP_
+#define DEBBY_COMMON_UTILS_HPP_
 
 #include <algorithm>
 
@@ -72,3 +73,4 @@ inline T to_degrees(T radians) noexcept {
 }
 }  // namespace debby::utils
 
+#endif  // DEBBY_COMMON_UTILS_HPP_

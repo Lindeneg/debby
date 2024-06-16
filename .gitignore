@@ -2,6 +2,10 @@
 build
 compile_commands.json
 compile_flags.txt
-debugger.rdbg
+misc
+_misc
+!misc/build-cl.bat
 obj
 _ignore
+cmake-build-*
+.idea
