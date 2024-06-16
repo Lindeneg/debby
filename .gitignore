@@ -2,8 +2,8 @@
 build
 compile_commands.json
 compile_flags.txt
-misc
-_misc
+misc/*.bat
+*.rdbg
 !misc/build-cl.bat
 obj
 _ignore
